@@ -2,14 +2,15 @@
 
 What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
 
-- `clusters/prod/` — the manifests ArgoCD points at. **Phase 2, does not exist
-  yet.**
+- `clusters/prod/` — what ArgoCD deploys. The root `Application`, written by
+  the `argocd` role in `infrastructure`, syncs it recursively: one
+  `Application` per component (app of apps). ArgoCD itself is installed and
+  upgraded by RKE2's helm-controller, never from here.
 
 ## CURRENT PHASE: 2 (Cluster)
 
-Phase 2 builds the RKE2 cluster and ArgoCD (workspace `docs/design.md`). Until
-the cluster exists, nothing is deployed from here: if you are asked to, say so
-and stop.
+Phase 2 builds the RKE2 cluster and ArgoCD (workspace `docs/design.md`). The
+cluster exists; ArgoCD syncs `clusters/prod/` from `main`.
 
 ## What goes where
 
