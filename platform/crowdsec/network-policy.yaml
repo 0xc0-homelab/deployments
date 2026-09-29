@@ -1,0 +1,65 @@
+# CrowdSec's pods deny ingress but what they are for. Its metrics (6060) stay
+# closed; kubelet's probes come from the pod's own node, always allowed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: crowdsec
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# The LAPI: Traefik's bouncer pulls its decisions, and CrowdSec's own agents
+# and AppSec component report to it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: lapi
+  namespace: crowdsec
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: crowdsec
+      type: lapi
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              k8s-app: crowdsec
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# AppSec, the WAF: only Traefik's bouncer sends it requests.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: appsec
+  namespace: crowdsec
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: crowdsec
+      type: appsec
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 7422

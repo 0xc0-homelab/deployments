@@ -1,0 +1,12 @@
+# One AppSec pod stays up through a drain: without it, Traefik's bouncer
+# answers 403 to everything.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: crowdsec-appsec
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      k8s-app: crowdsec
+      type: appsec
