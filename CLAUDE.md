@@ -11,7 +11,9 @@ What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
   version with its `values*.yaml`; `resources` for what the charts do not bring
   (its `Namespace`, with its Pod Security and Gateway labels, and its
   NetworkPolicies); `patches` for tweaks. Adding a component is adding its
-  directory. A component holding data or CRDs sets `Prune=false` through
+  directory. Its Application's destination namespace is the directory's name:
+  Argo CD puts there what a chart leaves without one, because Kustomize's
+  `namespace` field does not reach what `helmCharts` inflates. A component holding data or CRDs sets `Prune=false` through
   `commonAnnotations`.
 - ArgoCD itself is installed and upgraded by RKE2's helm-controller, never
   from here. The applications of phase 6 get `apps/`, the same pattern under

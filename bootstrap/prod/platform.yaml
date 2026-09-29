@@ -31,6 +31,11 @@ spec:
         path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
+        # For what a chart leaves without a namespace, as helm install -n
+        # would: Kustomize's namespace field does not reach what helmCharts
+        # inflates. A chart that sets its own (Longhorn's longhorn-system)
+        # keeps it.
+        namespace: "{{ .path.basename }}"
       syncPolicy:
         # Pruning stays on for most; the components that hold data or CRDs
         # opt out per resource (Prune=false in their kustomization.yaml).
