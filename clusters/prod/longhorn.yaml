@@ -71,15 +71,20 @@ spec:
         defaultSettings:
           defaultDataPath: /var/lib/longhorn
           defaultReplicaCount: 3
-        # Every Longhorn pod denies what it does not need. The API server
-        # (the webhook's caller) and the iSCSI initiators run on the nodes'
-        # own network, so both come from platform.
+        # Longhorn's pods deny what they do not need from each other. The
+        # webhook's caller (the API server) and the iSCSI initiators run on the
+        # nodes' own network, but under Canal they reach a pod from the node's
+        # pod-network address (flannel.1, 10.42.N.0), not from platform, and
+        # that address follows the podCIDR each node gets when it joins. So
+        # neither is filtered by source, Longhorn's default: filtering on
+        # 10.10.4.0/24 blocked every webhook call across nodes. Closing them
+        # properly is #10.
         networkPolicies:
           enabled: true
           restrictInternalTraffic: true
           type: rke2
-          kubeAPIServerSourceCIDRs: [10.10.4.0/24]
-          v1DataEngineInitiatorSourceCIDRs: [10.10.4.0/24]
+          kubeAPIServerSourceCIDRs: []
+          v1DataEngineInitiatorSourceCIDRs: []
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
