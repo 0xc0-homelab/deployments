@@ -8,6 +8,9 @@ metadata:
   name: gateway-api
   namespace: argocd
   annotations:
+    # Kept through the move to bootstrap/prod (#16): the root must not
+    # delete this Application; the platform ApplicationSet adopts it.
+    argocd.argoproj.io/sync-options: Prune=false
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default

@@ -7,6 +7,10 @@ kind: Application
 metadata:
   name: traefik
   namespace: argocd
+  annotations:
+    # Kept through the move to bootstrap/prod (#16): the root must not
+    # delete this Application; the platform ApplicationSet adopts it.
+    argocd.argoproj.io/sync-options: Prune=false
 spec:
   project: default
   source:
