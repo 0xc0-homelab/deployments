@@ -1,0 +1,19 @@
+# Traefik, the cluster's ingress, with the Gateway API. One pod per node,
+# behind a NodePort the load balancers' HAProxy sends the VIP's port 80 to. No
+# TLS here: Cloudflare ends it for public traffic, and WARP carries the
+# internal one.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: traefik
+helmCharts:
+  - name: traefik
+    repo: https://traefik.github.io/charts
+    version: 41.6.0
+    releaseName: traefik
+    namespace: traefik
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml

@@ -1,0 +1,50 @@
+# One Application per directory under platform/, each a Kustomize component:
+# its charts, pinned, their values, and what they do not bring. Adding a
+# component is adding its directory. The Applications keep the directory's
+# name.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/0xc0-homelab/gitops.git
+        revision: main
+        directories:
+          - path: platform/*
+  # Deleting the ApplicationSet, or one of its Applications, never deletes what
+  # they deployed. None carries Argo CD's cascading finalizer either.
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  template:
+    metadata:
+      name: "{{ .path.basename }}"
+    spec:
+      project: platform
+      source:
+        repoURL: https://github.com/0xc0-homelab/gitops.git
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        # Pruning stays on for most; the components that hold data or CRDs
+        # opt out per resource (Prune=false in their kustomization.yaml).
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          # Some CRDs are too large for client-side apply's annotation.
+          - ServerSideApply=true
+        # A component whose CRDs or StorageClass come from another waits for
+        # them by retrying, rather than by a numbered order.
+        retry:
+          limit: 10
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

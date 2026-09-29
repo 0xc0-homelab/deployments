@@ -1,0 +1,7 @@
+# Longhorn's pods run privileged: they manage the nodes' disks and iSCSI.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: longhorn-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged

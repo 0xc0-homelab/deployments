@@ -1,0 +1,38 @@
+# Longhorn: the cluster's storage, and its default StorageClass. Every volume
+# has three replicas, one per node, on each node's two data disks, which the
+# longhorn_node role in infrastructure joins into /var/lib/longhorn.
+#
+# Backups: none of its own. PBS backs the three VMs up whole, data disks
+# included, so every Longhorn volume is in the VM backups.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: longhorn-system
+helmCharts:
+  - name: longhorn
+    repo: https://charts.longhorn.io
+    version: 1.13.0
+    releaseName: longhorn
+    namespace: longhorn-system
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+patches:
+  # The chart's pre-delete hook uninstalls Longhorn. Argo CD runs it when the
+  # Application is deleted, and gives the Application a finalizer for it: a
+  # GitOps-managed Longhorn never uninstalls itself as a side effect.
+  - target:
+      kind: Job
+      name: longhorn-uninstall
+    patch: |-
+      $patch: delete
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: longhorn-uninstall
+# No pruning: deleting what holds the cluster's data is never a side effect of
+# a sync.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false
