@@ -16,3 +16,5 @@ from phase 3.
 Components, each in its own file:
 
 - `longhorn.yaml`: the cluster's storage and its default `StorageClass` (#8).
+- `longhorn/`: what the chart does not bring, such as the namespace's
+  default-deny for ingress (#10), synced by the root `Application` itself.

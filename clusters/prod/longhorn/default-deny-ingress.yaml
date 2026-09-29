@@ -1,0 +1,19 @@
+# Every Longhorn pod denies ingress unless a policy allows it. Longhorn's own
+# policies (networkPolicies in longhorn.yaml) allow what the manager, the
+# instance managers, the webhooks and the backing-image pods need; policies
+# add up, so they keep working. This closes the rest: the UI, the CSI plugin
+# and its sidecars, the global manager, the driver deployer, the engine image
+# and share-manager. Kubelet's probes come from the pod's own node, which a
+# NetworkPolicy always allows.
+#
+# RWX volumes (share-manager's NFS, 2049) need an explicit allow the day one is
+# used: the nodes reach it from pod-network addresses that change per node.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: longhorn-system
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
