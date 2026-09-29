@@ -13,4 +13,6 @@ digest. Nothing here holds a secret, not even encrypted: what the cluster
 needs to boot comes from SOPS through Ansible, and everything else from Vault,
 from phase 3.
 
-Empty until the first component, the ingress with open-appsec (gitops#6).
+Components, each in its own file:
+
+- `longhorn.yaml`: the cluster's storage and its default `StorageClass` (#8).
