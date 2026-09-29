@@ -49,6 +49,11 @@ ports:
     # later the data services) cannot forge it.
     forwardedHeaders:
       trustedIPs: [10.10.4.11/32, 10.10.4.12/32]
+    # Every request on the entrypoint goes through CrowdSec's bouncer first
+    # (crowdsec-bouncer.yaml).
+    http:
+      middlewares:
+        - traefik-crowdsec-bouncer@kubernetescrd
   websecure:
     expose:
       default: false
@@ -56,3 +61,16 @@ ports:
 accessLog:
   enabled: true
   format: json
+# CrowdSec's bouncer, as a Traefik plugin pinned by version. Traefik fetches
+# it from its plugin catalogue when it starts.
+experimental:
+  plugins:
+    crowdsec-bouncer:
+      moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+      version: v1.7.1
+# The bouncer's LAPI key, a boot secret (the cluster_secrets role in
+# infrastructure, from SOPS), read by the plugin as a file.
+volumes:
+  - name: crowdsec-bouncer-key
+    mountPath: /etc/traefik/crowdsec
+    type: secret

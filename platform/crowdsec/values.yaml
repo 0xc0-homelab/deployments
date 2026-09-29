@@ -1,0 +1,72 @@
+# Values for the crowdsec chart (kustomization.yaml pins its version).
+# RKE2 runs containerd: the agents parse its log format, not Docker's.
+container_runtime: containerd
+# Pinned by digest, the multi-arch index. Bumping is its own commit.
+image:
+  repository: crowdsecurity/crowdsec
+  tag: "v1.8.1@sha256:0f2523fa61ef507f15d953045cface490cc880670c62f2755ced17524107f71a"
+# One agent per node, reading Traefik's access logs (JSON) for behaviour:
+# scans, brute force, known-bad bots.
+agent:
+  acquisition:
+    - namespace: traefik
+      podName: traefik-*
+      program: traefik
+  env:
+    - name: COLLECTIONS
+      value: crowdsecurity/traefik
+# The LAPI's shared secret and AppSec's registration token, a boot secret
+# (the cluster_secrets role in infrastructure, from SOPS). Left to the chart,
+# they are random on every render: ArgoCD would rewrite them and roll the
+# LAPI on each sync.
+secrets:
+  externalSecret:
+    name: crowdsec-lapi
+lapi:
+  # The bouncer's key comes from a boot secret (the cluster_secrets role in
+  # infrastructure, from SOPS), never from here.
+  env:
+    - name: BOUNCER_KEY_traefik
+      valueFrom:
+        secretKeyRef:
+          name: crowdsec-bouncer-key
+          key: key
+  # Its database and its credentials, on Longhorn (the default StorageClass).
+  persistentVolume:
+    data:
+      enabled: true
+      size: 1Gi
+    config:
+      enabled: true
+      size: 1Gi
+# The WAF: Traefik's bouncer sends it every request. Virtual patching (rules
+# for known CVEs, few false positives) and generic rules; no CRS to tune.
+# Traefik's bouncer blocks when AppSec cannot answer, so there are always
+# two, on different nodes, replaced one at a time (and pdb.yaml keeps one
+# through a drain).
+appsec:
+  enabled: true
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              k8s-app: crowdsec
+              type: appsec
+  acquisitions:
+    - source: appsec
+      listen_addr: "0.0.0.0:7422"
+      path: /
+      appsec_config: crowdsecurity/appsec-default
+      labels:
+        type: appsec
+  env:
+    - name: COLLECTIONS
+      value: "crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules"
