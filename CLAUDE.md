@@ -55,5 +55,14 @@ rebuilt between environments.
 ## Before opening a PR
 
 For changes touching exposure or NetworkPolicies, run
-`homelab:network-reviewer`. The manifest validation tooling is declared in
-`mise.toml` when the cluster arrives.
+`homelab:network-reviewer`.
+
+Render every `Application` you touch with its own values and validate what
+comes out, with the tools in `mise.toml`:
+
+```
+yq '.spec.source.helm.valuesObject' clusters/prod/<app>.yaml > /tmp/values.yaml
+helm template <app> <chart> --version <version> --repo <repo> -n <namespace> \
+  --kube-version 1.36.4 -f /tmp/values.yaml \
+  | kubeconform -strict -ignore-missing-schemas -kubernetes-version 1.36.0 -summary
+```
