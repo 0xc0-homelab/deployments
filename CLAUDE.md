@@ -60,9 +60,9 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   and frequency. Without that, the service is not deployed.
 - **Secrets:** what the cluster needs to boot comes from SOPS+age; everything
   else from Vault, from phase 3. Never a secret in cleartext in a manifest.
-- **Portals** (Grafana, ArgoCD) are published only behind Cloudflare Access.
-  **Vault, the Kubernetes API and other admin interfaces are never published**:
-  they are reached over WARP.
+- **Portals** (Grafana, ArgoCD) are internal: reached only over WARP, never
+  published (operator decision, 2026-09-29). **Vault, the Kubernetes API and
+  other admin interfaces are never published** either.
 
 ## Promotion
 
