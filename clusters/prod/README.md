@@ -18,3 +18,6 @@ Components, each in its own file:
 - `longhorn.yaml`: the cluster's storage and its default `StorageClass` (#8).
 - `longhorn/`: what the chart does not bring, such as the namespace's
   default-deny for ingress (#10), synced by the root `Application` itself.
+- `gateway-api.yaml`: the Gateway API's standard CRDs, v1.6.2 (#6).
+- `traefik.yaml` and `traefik/`: the ingress, Traefik with the Gateway API, and
+  its namespace's network policies (#6).
