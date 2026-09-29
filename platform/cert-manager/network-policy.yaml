@@ -1,0 +1,31 @@
+# cert-manager's pods deny ingress but the webhook. The metrics stay closed;
+# kubelet's probes come from the pod's own node, always allowed. Egress stays
+# open: Let's Encrypt, Cloudflare's API and its resolvers.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: cert-manager
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# The webhook, which the API server calls to validate every cert-manager
+# resource. Under Canal the API server reaches it from a node's pod-network
+# address (10.42.N.0), not the node's own: no narrower source holds.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: webhook
+  namespace: cert-manager
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: webhook
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 10250

@@ -21,17 +21,52 @@ providers:
 ingressClass:
   enabled: false
 gateway:
+  # external-dns (platform/external-dns) points a public route's name at the
+  # public tunnel (infrastructure: tofu output public_tunnel_id).
+  annotations:
+    external-dns.alpha.kubernetes.io/target: 2bca7b27-f56a-4d12-bb93-079837015367.cfargotunnel.com
+  # One HTTPS listener per name pattern, each with its domain's wildcard
+  # (certificates.yaml). A namespace opts in to attach routes with the label
+  # gateway.0xc0.cc/web: "true"; no other can claim a hostname. web only
+  # redirects to HTTPS, so no route attaches to it.
   listeners:
     web:
       port: 8000
       protocol: HTTP
-      # A namespace opts in to attach routes here with the label
-      # gateway.0xc0.cc/web: "true"; no other can claim a hostname.
       namespacePolicy:
+        from: Same
+    websecure-0xc0-cc:
+      port: 8443
+      protocol: HTTPS
+      hostname: "*.0xc0.cc"
+      certificateRefs:
+        - name: wildcard-0xc0-cc
+      namespacePolicy: &routes
         from: Selector
         selector:
           matchLabels:
             gateway.0xc0.cc/web: "true"
+    websecure-0xc0-cc-apex:
+      port: 8443
+      protocol: HTTPS
+      hostname: 0xc0.cc
+      certificateRefs:
+        - name: wildcard-0xc0-cc
+      namespacePolicy: *routes
+    websecure-offby1-cc:
+      port: 8443
+      protocol: HTTPS
+      hostname: "*.offby1.cc"
+      certificateRefs:
+        - name: wildcard-offby1-cc
+      namespacePolicy: *routes
+    websecure-offby1-cc-apex:
+      port: 8443
+      protocol: HTTPS
+      hostname: offby1.cc
+      certificateRefs:
+        - name: wildcard-offby1-cc
+      namespacePolicy: *routes
 service:
   spec:
     type: NodePort
@@ -40,8 +75,19 @@ service:
     # else's.
     externalTrafficPolicy: Local
 ports:
+  # Plain HTTP only redirects to HTTPS.
   web:
     nodePort: 30080
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  # TLS ends here, with Let's Encrypt (certificates.yaml), for the public
+  # tunnel and WARP alike.
+  websecure:
+    nodePort: 30443
     # The client's address comes in X-Forwarded-For, which cloudflared
     # sets (with CF-Connecting-IP). Trusted only from the two load
     # balancers, vm-lb-01 and vm-lb-02: HAProxy connects from each
@@ -54,9 +100,6 @@ ports:
     http:
       middlewares:
         - traefik-crowdsec-bouncer@kubernetescrd
-  websecure:
-    expose:
-      default: false
 # What CrowdSec reads.
 accessLog:
   enabled: true
