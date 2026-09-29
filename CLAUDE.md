@@ -21,8 +21,8 @@ One RKE2 cluster, in the `platform` zone, holds everything after phase 1:
 - **Applications**.
 
 They are separated by namespace and NetworkPolicy. Traffic enters through the
-HAProxy load balancer in front of the cluster, and the ingress carries the WAF
-(open-appsec).
+HAProxy load balancer in front of the cluster (layer 4), and the ingress,
+Traefik, carries the WAF: CrowdSec's bouncer.
 
 The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
 (`zones`, `vms`, `transit`) and explained in `../infrastructure/docs/zones.md`.
@@ -35,8 +35,9 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   (`Closes #N` / `Refs owner/repo#N`) or the `issue` check fails. See the
   workspace `CLAUDE.md`, section Tracking.
 - **Images pinned by digest.** Never `latest`, never a tag alone.
-- **The WAF lives at the ingress** (open-appsec). Do not duplicate it in a
-  service.
+- **The WAF lives at the ingress**: CrowdSec's bouncer on Traefik's
+  entrypoint. Do not duplicate it in a service. Behind Cloudflare, the client
+  is `CF-Connecting-IP`, trusted only from `platform`.
 - **Every namespace denies by default** and opens only what it needs, with
   NetworkPolicies. Data services accept connections and initiate none.
 - **Every persistent volume declares its backup** in a comment: destination
