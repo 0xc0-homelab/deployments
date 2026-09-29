@@ -1,0 +1,16 @@
+# Renders every component under platform/ as Argo CD does, and validates it and
+# the bootstrap's manifests, on every PR that touches them. The steps live in
+# the reusable workflow in 0xc0-homelab/.github.
+name: validate
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ['platform/**', 'bootstrap/**', 'mise.toml', '.github/workflows/validate.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: 0xc0-homelab/.github/.github/workflows/kustomize-validate.yml@main

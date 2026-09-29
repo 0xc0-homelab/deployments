@@ -1,0 +1,3 @@
+# Charts kustomize --enable-helm inflates locally. Argo CD pulls its own, from
+# the version each kustomization.yaml pins; nothing is vendored.
+platform/*/charts/

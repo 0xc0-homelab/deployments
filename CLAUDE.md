@@ -2,15 +2,29 @@
 
 What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
 
-- `clusters/prod/` — what ArgoCD deploys. The root `Application`, written by
-  the `argocd` role in `infrastructure`, syncs it recursively: one
-  `Application` per component (app of apps). ArgoCD itself is installed and
-  upgraded by RKE2's helm-controller, never from here.
+- `bootstrap/prod/` — what the root `Application` syncs; the `argocd` role in
+  `infrastructure` writes that root. It holds the `AppProject`s and the
+  `platform` ApplicationSet, which turns every directory under `platform/`
+  into an `Application` of its name, in the `platform` project.
+- `platform/<component>/` — one Kustomize component per shared service: a
+  `kustomization.yaml` whose `helmCharts` inflate 1..n charts, each pinned by
+  version with its `values*.yaml`; `resources` for what the charts do not bring
+  (its `Namespace`, with its Pod Security and Gateway labels, and its
+  NetworkPolicies); `patches` for tweaks. Adding a component is adding its
+  directory. A component holding data or CRDs sets `Prune=false` through
+  `commonAnnotations`.
+- ArgoCD itself is installed and upgraded by RKE2's helm-controller, never
+  from here. The applications of phase 6 get `apps/`, the same pattern under
+  their own `AppProject`.
+
+Operator decision, 2026-09-29 (#16): an ApplicationSet over Kustomize
+components, instead of hand-written `Application`s with inline values.
 
 ## CURRENT PHASE: 2 (Cluster)
 
 Phase 2 builds the RKE2 cluster and ArgoCD (workspace `docs/design.md`). The
-cluster exists; ArgoCD syncs `clusters/prod/` from `main`.
+cluster exists; ArgoCD syncs `bootstrap/prod/`, and through it `platform/`,
+from `main`.
 
 ## What goes where
 
@@ -58,12 +72,13 @@ rebuilt between environments.
 For changes touching exposure or NetworkPolicies, run
 `homelab:network-reviewer`.
 
-Render every `Application` you touch with its own values and validate what
-comes out, with the tools in `mise.toml`:
+Render every component you touch exactly as Argo CD does, and validate what
+comes out, with the tools in `mise.toml` (CI runs the same on every PR):
 
 ```
-yq '.spec.source.helm.valuesObject' clusters/prod/<app>.yaml > /tmp/values.yaml
-helm template <app> <chart> --version <version> --repo <repo> -n <namespace> \
-  --kube-version 1.36.4 -f /tmp/values.yaml \
+kustomize build --enable-helm platform/<component> \
   | kubeconform -strict -ignore-missing-schemas -kubernetes-version 1.36.0 -summary
 ```
+
+`kustomize` downloads the charts into `platform/<component>/charts/`, which
+git ignores: nothing is vendored.

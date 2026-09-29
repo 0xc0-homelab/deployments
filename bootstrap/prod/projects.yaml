@@ -1,0 +1,21 @@
+# What each kind of workload may do, instead of Argo CD's default project,
+# which allows everything. The shared services are "platform": cluster-scoped
+# resources (CRDs, ClusterRoles, StorageClasses) and any namespace, from this
+# repo only. The applications of phase 6 get their own, narrower project.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  description: The cluster's shared services, from platform/ in this repo.
+  # Only this repo is an Argo CD source; the charts and remote bases each
+  # component pulls are pinned in its kustomization.yaml.
+  sourceRepos:
+    - https://github.com/0xc0-homelab/gitops.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: "*"
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"

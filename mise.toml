@@ -7,6 +7,7 @@ jq          = "1.8.2"
 helm        = "4.3.0"
 kubeconform = "0.8.0"
 yq          = "4.53.6"
+kustomize   = "5.8.1"
 
 [env]
 # Same path on macOS and Linux. Without it sops looks in a macOS-only location.
