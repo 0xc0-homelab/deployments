@@ -28,7 +28,8 @@ gateway:
   # One HTTPS listener per name pattern, each with its domain's wildcard
   # (certificates.yaml). A namespace opts in to attach routes with the label
   # gateway.0xc0.cc/web: "true"; no other can claim a hostname. web only
-  # redirects to HTTPS, so no route attaches to it.
+  # redirects to HTTPS, so no route attaches to it. The API server's defaults
+  # (mode, group, kind) are written out, or Argo CD sees a diff forever.
   listeners:
     web:
       port: 8000
@@ -39,8 +40,11 @@ gateway:
       port: 8443
       protocol: HTTPS
       hostname: "*.0xc0.cc"
+      mode: Terminate
       certificateRefs:
         - name: wildcard-0xc0-cc
+          group: ""
+          kind: Secret
       namespacePolicy: &routes
         from: Selector
         selector:
@@ -50,22 +54,31 @@ gateway:
       port: 8443
       protocol: HTTPS
       hostname: 0xc0.cc
+      mode: Terminate
       certificateRefs:
         - name: wildcard-0xc0-cc
+          group: ""
+          kind: Secret
       namespacePolicy: *routes
     websecure-offby1-cc:
       port: 8443
       protocol: HTTPS
       hostname: "*.offby1.cc"
+      mode: Terminate
       certificateRefs:
         - name: wildcard-offby1-cc
+          group: ""
+          kind: Secret
       namespacePolicy: *routes
     websecure-offby1-cc-apex:
       port: 8443
       protocol: HTTPS
       hostname: offby1.cc
+      mode: Terminate
       certificateRefs:
         - name: wildcard-offby1-cc
+          group: ""
+          kind: Secret
       namespacePolicy: *routes
 service:
   spec:
