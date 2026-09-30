@@ -20,6 +20,7 @@ helmCharts:
 resources:
   - namespace.yaml
   - network-policy.yaml
+  - vault-secrets.yaml
 # No pruning: it brings CRDs.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false
