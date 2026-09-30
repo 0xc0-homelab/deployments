@@ -61,6 +61,16 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   of its `domainFilters` (the zones in the public tunnel's Cloudflare account,
   also listed in infrastructure's `public_domains`). A portal never carries
   it.
+- **Two paths in**, separated by network. Public and WARP traffic reaches the
+  public VIP (`10.10.4.10`) and `websecure`. The WARP-only path reaches the
+  internal VIP (`10.10.4.9`) and Traefik's `internal` entrypoint, which the
+  public tunnel never targets. An internal service attaches to the Gateway's
+  `internal` listener (`sectionName: internal`) with a `*.int.0xc0.cc` name,
+  its namespace labelled `gateway.0xc0.cc/internal: "true"`, and never
+  carries the `public` annotation. external-dns never publishes under
+  `int.0xc0.cc`. A `*.int.0xc0.cc` name never goes on a `websecure` route
+  either: the public `*.0xc0.cc` listener would accept it. The internal path
+  has no WAF: CrowdSec's bouncer is on `websecure` only.
 - **The WAF lives at the ingress**: CrowdSec's bouncer on Traefik's
   entrypoint. Do not duplicate it in a service. Behind Cloudflare, the client
   is `CF-Connecting-IP`, trusted only from `platform`.

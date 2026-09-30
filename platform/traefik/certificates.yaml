@@ -2,6 +2,7 @@
 # from the letsencrypt ClusterIssuer (platform/cert-manager). Adding a domain
 # is a Certificate here, its two listeners, and its zone in the Cloudflare
 # token. sergioaten.cloud waits for that token: it does not reach the zone yet.
+# int.0xc0.cc is the WARP-only path's, on the internal listener.
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -30,6 +31,24 @@ spec:
   dnsNames:
     - "*.offby1.cc"
     - offby1.cc
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-int-0xc0-cc
+  namespace: traefik
+spec:
+  secretName: wildcard-int-0xc0-cc
+  dnsNames:
+    - "*.int.0xc0.cc"
+    - int.0xc0.cc
   issuerRef:
     kind: ClusterIssuer
     name: letsencrypt

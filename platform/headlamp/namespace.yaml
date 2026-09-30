@@ -1,0 +1,8 @@
+# Its routes attach to the Gateway's internal listener only.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: headlamp
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    gateway.0xc0.cc/internal: "true"
