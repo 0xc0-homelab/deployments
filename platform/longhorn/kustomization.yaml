@@ -1,8 +1,9 @@
 # Longhorn: the cluster's storage, and its default StorageClass. Every volume
-# has three replicas, one per node, on each node's two data disks, which the
-# longhorn_node role in infrastructure joins into /var/lib/longhorn.
+# has three replicas on different nodes, on each RKE2 node's two data disks
+# (servers and agents), which the longhorn_node role in infrastructure joins
+# into /var/lib/longhorn.
 #
-# Backups: none of its own. PBS backs the three VMs up whole, data disks
+# Backups: none of its own. PBS backs every RKE2 VM up whole, data disks
 # included, so every Longhorn volume is in the VM backups.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
