@@ -5,3 +5,5 @@ metadata:
   name: longhorn-system
   labels:
     pod-security.kubernetes.io/enforce: privileged
+    # Its UI's route attaches to the Gateway's internal listener (ui.yaml).
+    gateway.0xc0.cc/internal: "true"
