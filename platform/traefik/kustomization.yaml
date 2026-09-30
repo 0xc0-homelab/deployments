@@ -19,3 +19,4 @@ resources:
   - network-policy.yaml
   - crowdsec-bouncer.yaml
   - certificates.yaml
+  - dashboard.yaml

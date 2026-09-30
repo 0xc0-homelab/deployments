@@ -1,0 +1,37 @@
+# Traefik's dashboard on the WARP-only path: https://traefik.int.0xc0.cc,
+# never public. It has no login of its own, so basic auth guards it until OIDC
+# (phase 3): the Secret ui-basic-auth is a boot secret (the cluster_secrets
+# role in infrastructure, from SOPS). Its backend is Traefik's own api@internal.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ui-basic-auth
+  namespace: traefik
+spec:
+  basicAuth:
+    secret: ui-basic-auth
+    removeHeader: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: dashboard
+  namespace: traefik
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+      sectionName: internal
+  hostnames:
+    - traefik.int.0xc0.cc
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: ui-basic-auth
+      backendRefs:
+        - group: traefik.io
+          kind: TraefikService
+          name: api@internal

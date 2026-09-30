@@ -1,0 +1,36 @@
+# Longhorn's UI on the WARP-only path: https://longhorn.int.0xc0.cc, never
+# public. It has no login and can delete volumes, so basic auth guards it until
+# OIDC (phase 3): the Secret ui-basic-auth is a boot secret (the cluster_secrets
+# role in infrastructure, from SOPS).
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: ui-basic-auth
+  namespace: longhorn-system
+spec:
+  basicAuth:
+    secret: ui-basic-auth
+    removeHeader: true
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: longhorn-ui
+  namespace: longhorn-system
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+      sectionName: internal
+  hostnames:
+    - longhorn.int.0xc0.cc
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: ui-basic-auth
+      backendRefs:
+        - name: longhorn-frontend
+          port: 80
