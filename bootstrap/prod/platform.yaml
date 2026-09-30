@@ -23,6 +23,11 @@ spec:
   template:
     metadata:
       name: "{{ .path.basename }}"
+      # Diff against the API server's dry-run of the apply, not the manifest
+      # alone: the fields it defaults (a Gateway listener's tls.mode, an
+      # HTTPRoute's group, kind and weight) are not drift.
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
     spec:
       project: platform
       source:
