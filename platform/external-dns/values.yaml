@@ -22,6 +22,9 @@ annotationFilter: gateway.0xc0.cc/public=true
 # account's zone (offby1.cc) fails at the edge with 1014.
 domainFilters:
   - 0xc0.cc
+# The WARP-only path's names never get a public record, whatever a route says.
+excludeDomains:
+  - int.0xc0.cc
 # It deletes what it created and nothing else: the TXT records mark what is
 # its own.
 policy: sync
