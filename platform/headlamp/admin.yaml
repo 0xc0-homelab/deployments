@@ -1,5 +1,8 @@
-# Who logs in to Headlamp as cluster-admin: a token of this ServiceAccount,
-# short-lived and never stored, taken over WARP when needed:
+# Who logs in to Headlamp. Day to day, read-only: a token of headlamp-viewer
+# (the view ClusterRole: no Secrets, no changes), valid for 30 days:
+#   kubectl -n headlamp create token headlamp-viewer --duration 720h
+# To change something, cluster-admin: a token of headlamp-admin, short-lived
+# and never stored, taken over WARP when needed:
 #   kubectl -n headlamp create token headlamp-admin --duration 8h
 # Whoever may create tokens for it in this namespace is cluster-admin: an
 # accepted risk until OIDC with Vault replaces it, in phase 3.
@@ -20,4 +23,23 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: headlamp-admin
+    namespace: headlamp
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp-viewer
+  namespace: headlamp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-viewer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: headlamp-viewer
     namespace: headlamp
