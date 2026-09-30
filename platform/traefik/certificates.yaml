@@ -1,0 +1,39 @@
+# One wildcard per domain, for the Gateway's HTTPS listeners (values.yaml),
+# from the letsencrypt ClusterIssuer (platform/cert-manager). Adding a domain
+# is a Certificate here, its two listeners, and its zone in the Cloudflare
+# token. sergioaten.cloud waits for that token: it does not reach the zone yet.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-0xc0-cc
+  namespace: traefik
+spec:
+  secretName: wildcard-0xc0-cc
+  dnsNames:
+    - "*.0xc0.cc"
+    - 0xc0.cc
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-offby1-cc
+  namespace: traefik
+spec:
+  secretName: wildcard-offby1-cc
+  dnsNames:
+    - "*.offby1.cc"
+    - offby1.cc
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always

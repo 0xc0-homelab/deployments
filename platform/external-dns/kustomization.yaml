@@ -1,0 +1,25 @@
+# external-dns: publishes the public routes' names in Cloudflare, so publishing
+# a route is a change in gitops alone (operator decision, 2026-09-29, ahead of
+# phase 6 on purpose). Only an HTTPRoute annotated gateway.0xc0.cc/public:
+# "true" gets a record, a proxied CNAME to the public tunnel; the portals never
+# do, and stay on WARP.
+#
+# Backups: no volumes. Its state is the TXT ownership records in Cloudflare.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: external-dns
+helmCharts:
+  - name: external-dns
+    repo: https://kubernetes-sigs.github.io/external-dns
+    version: 1.22.0
+    releaseName: external-dns
+    namespace: external-dns
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+# No pruning: it brings CRDs.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

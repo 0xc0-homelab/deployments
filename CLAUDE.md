@@ -51,6 +51,16 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   (`Closes #N` / `Refs owner/repo#N`) or the `issue` check fails. See the
   workspace `CLAUDE.md`, section Tracking.
 - **Images pinned by digest.** Never `latest`, never a tag alone.
+- **TLS ends at Traefik**, with a Let's Encrypt wildcard per domain from
+  cert-manager (`platform/traefik/certificates.yaml`), on the HTTPS listeners
+  of the Gateway. Routes attach to those, never to `web`, which only
+  redirects. Adding a domain: its Certificate, its two listeners (`*.d` and
+  `d`), and its zone in the Cloudflare token.
+- **A name is public only by annotation**: external-dns publishes the
+  HTTPRoutes marked `gateway.0xc0.cc/public: "true"`, and only in the domains
+  of its `domainFilters` (the zones in the public tunnel's Cloudflare account,
+  also listed in infrastructure's `public_domains`). A portal never carries
+  it.
 - **The WAF lives at the ingress**: CrowdSec's bouncer on Traefik's
   entrypoint. Do not duplicate it in a service. Behind Cloudflare, the client
   is `CF-Connecting-IP`, trusted only from `platform`.

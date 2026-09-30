@@ -1,0 +1,20 @@
+# Let's Encrypt, production. Every certificate in the cluster comes from here.
+# DNS-01 through Cloudflare, for every zone the token reaches: 0xc0.cc and
+# offby1.cc today. The token is a boot secret (the cluster_secrets role in
+# infrastructure): OpenTofu's, reused until Vault (.github#6).
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: me@sergioaten.cloud
+    privateKeySecretRef:
+      name: letsencrypt-account-key
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: token

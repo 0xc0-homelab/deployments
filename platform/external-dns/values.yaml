@@ -1,0 +1,33 @@
+# Values for the external-dns chart (kustomization.yaml pins its version).
+# Pinned by digest, the multi-arch index. Bumping is its own commit.
+image:
+  tag: "v0.22.0@sha256:5fdcaf7deb5c158f93a1fc6fe169cdff4cfb9ae0172bee1a90ab0ef74fb9c9cf"
+provider:
+  name: cloudflare
+# The token is a boot secret (the cluster_secrets role in infrastructure):
+# OpenTofu's, reused until Vault (.github#6).
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-token
+        key: token
+sources:
+  - gateway-httproute
+# Only the public routes. The record's target is the Gateway's
+# external-dns.alpha.kubernetes.io/target annotation (platform/traefik): the
+# public tunnel.
+annotationFilter: gateway.0xc0.cc/public=true
+# Only the zones in the tunnel's own account: a CNAME to it from another
+# account's zone (offby1.cc) fails at the edge with 1014.
+domainFilters:
+  - 0xc0.cc
+# It deletes what it created and nothing else: the TXT records mark what is
+# its own.
+policy: sync
+registry: txt
+txtOwnerId: homelab-prod
+# The ownership TXT never shares a name with the CNAME it describes.
+txtPrefix: extdns-
+extraArgs:
+  - --cloudflare-proxied

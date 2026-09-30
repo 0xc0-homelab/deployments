@@ -1,0 +1,12 @@
+# external-dns takes no connections: its metrics (7979) stay closed, and
+# kubelet's probes come from the pod's own node, always allowed. Egress stays
+# open, for Cloudflare's API.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: external-dns
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
