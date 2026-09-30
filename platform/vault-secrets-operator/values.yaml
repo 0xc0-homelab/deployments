@@ -12,6 +12,10 @@ controller:
     capabilities:
       drop: [ALL]
   manager:
+    # No default VaultAuthGlobal to fall back on: every namespace brings its
+    # own VaultAuth, and nothing else authenticates it.
+    globalVaultAuthOptions:
+      allowDefaultGlobals: false
     image:
       repository: hashicorp/vault-secrets-operator
       tag: "1.6.0@sha256:02a79a046037925d59c6a16fa7bdbf10aff1de1228c9d787d599b272b0f0c666"

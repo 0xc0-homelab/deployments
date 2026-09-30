@@ -3,7 +3,8 @@
 # the only backend, and VSO renews dynamic secrets' leases and restarts what
 # uses a secret when it changes). No global auth: every namespace brings its
 # own VaultAuth, bound to a Kubernetes auth role in Vault (the vault repo) that
-# reads only its own paths.
+# reads only its own paths. It may read and write Secrets in every namespace,
+# as it must to deliver them: nothing else ever runs in its namespace.
 #
 # Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -27,7 +28,9 @@ patches:
   # The chart's pre-delete hook deletes every VSO resource in the cluster
   # before an uninstall. Argo CD runs it when the Application is deleted, and
   # gives the Application a finalizer for it: a GitOps-managed operator never
-  # wipes its resources as a side effect.
+  # wipes its resources as a side effect. The Job is named after the release
+  # (pdcc-<releaseName>): changing releaseName needs this name changed too, or
+  # the patch silently matches nothing.
   - target:
       kind: Job
       name: pdcc-vault-secrets-operator
