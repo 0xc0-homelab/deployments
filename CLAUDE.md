@@ -16,8 +16,14 @@ What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
   `namespace` field does not reach what `helmCharts` inflates. A component holding data or CRDs sets `Prune=false` through
   `commonAnnotations`.
 - ArgoCD itself is installed and upgraded by RKE2's helm-controller, never
-  from here. The applications of phase 6 get `apps/`, the same pattern under
-  their own `AppProject`.
+  from here.
+- `apps/<application>/` — the applications, the same pattern: the `apps`
+  ApplicationSet turns each directory into an `Application` in the `apps`
+  AppProject, which may create no cluster-scoped resource but its Namespace,
+  and no Argo CD object. A new application adds its namespace to that
+  project's `destinations`, one line each.
+  Pingvin Share is the first, ahead of phase 6 (operator decision,
+  2026-09-30).
 
 Operator decision, 2026-09-29 (#16): an ApplicationSet over Kustomize
 components, instead of hand-written `Application`s with inline values.
@@ -56,6 +62,9 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   of the Gateway. Routes attach to those, never to `web`, which only
   redirects. Adding a domain: its Certificate, its two listeners (`*.d` and
   `d`), and its zone in the Cloudflare token.
+- **The `gateway.0xc0.cc/web` label lets a namespace attach routes to the
+  public listeners for any `*.0xc0.cc` or `*.offby1.cc` name**, not only its
+  own: give it only to a namespace whose routes are reviewed here.
 - **A name is public only by annotation**: external-dns publishes the
   HTTPRoutes marked `gateway.0xc0.cc/public: "true"`, and only in the domains
   of its `domainFilters` (the zones in the public tunnel's Cloudflare account,

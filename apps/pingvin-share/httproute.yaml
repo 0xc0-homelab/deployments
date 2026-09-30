@@ -1,0 +1,20 @@
+# Public: the public listener, and external-dns gives the name a proxied CNAME
+# to the public tunnel. Traffic passes CrowdSec's bouncer on websecure.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pingvin-share
+  namespace: pingvin-share
+  annotations:
+    gateway.0xc0.cc/public: "true"
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+      sectionName: websecure-0xc0-cc
+  hostnames:
+    - share.0xc0.cc
+  rules:
+    - backendRefs:
+        - name: pingvin-share
+          port: 3000

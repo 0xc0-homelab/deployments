@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pingvin-share-data
+  namespace: pingvin-share
+  # No pruning: it holds the shared files. The rest is pruned as usual, so a
+  # route taken out of git is unpublished.
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 50Gi

@@ -1,0 +1,60 @@
+# One Application per directory under apps/, each a Kustomize component:
+# its manifests or charts, pinned, and what they need. Adding an
+# application is adding its directory. The Applications keep the directory's
+# name.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/0xc0-homelab/gitops.git
+        revision: main
+        directories:
+          - path: apps/*
+  # Deleting the ApplicationSet, or one of its Applications, never deletes what
+  # they deployed. None carries Argo CD's cascading finalizer either.
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  template:
+    metadata:
+      name: "{{ .path.basename }}"
+      # Diff against the API server's dry-run of the apply, not the manifest
+      # alone: the fields it defaults (a Gateway listener's tls.mode, an
+      # HTTPRoute's group, kind and weight) are not drift.
+      annotations:
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
+    spec:
+      project: apps
+      source:
+        repoURL: https://github.com/0xc0-homelab/gitops.git
+        targetRevision: main
+        path: "{{ .path.path }}"
+      destination:
+        server: https://kubernetes.default.svc
+        # For what a chart leaves without a namespace, as helm install -n
+        # would: Kustomize's namespace field does not reach what helmCharts
+        # inflates. A chart that sets its own (Longhorn's longhorn-system)
+        # keeps it.
+        namespace: "{{ .path.basename }}"
+      syncPolicy:
+        # Pruning stays on for most; the components that hold data or CRDs
+        # opt out per resource (Prune=false in their kustomization.yaml).
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          # Some CRDs are too large for client-side apply's annotation.
+          - ServerSideApply=true
+        # A component whose CRDs or StorageClass come from another waits for
+        # them by retrying, rather than by a numbered order.
+        retry:
+          limit: 10
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

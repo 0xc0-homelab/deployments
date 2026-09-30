@@ -1,0 +1,11 @@
+# Its route attaches to the Gateway's public listener (httproute.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pingvin-share
+  # Deleting it would delete the volume with it.
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    gateway.0xc0.cc/web: "true"

@@ -19,3 +19,28 @@ spec:
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
+---
+# The applications (phase 6): from apps/ in this repo, each into its own
+# namespace only, listed one by one: an application can never write into a
+# platform namespace (argocd above all: an Application there could take the
+# platform project). Of the cluster-scoped resources they may create only
+# their Namespace, and no Argo CD object anywhere.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  description: The applications, from apps/ in this repo.
+  sourceRepos:
+    - https://github.com/0xc0-homelab/gitops.git
+  # One line per application, its namespace named after its directory.
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: pingvin-share
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceBlacklist:
+    - group: argoproj.io
+      kind: "*"

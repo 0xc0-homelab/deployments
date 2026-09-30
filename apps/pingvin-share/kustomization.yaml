@@ -1,0 +1,19 @@
+# Pingvin Share X, file sharing in the style of WeTransfer, public at
+# https://share.0xc0.cc (operator decision, 2026-09-30, ahead of phase 6).
+# Uploads go in chunks (10 MB by default), each under Cloudflare Free's 100 MB
+# request limit, so large files pass the tunnel. One container: its own Caddy,
+# the frontend and the backend, with SQLite on the data volume.
+#
+# Backups: the data volume (pingvin-share-data, 50Gi: the database and every
+# shared file) is on Longhorn, so PBS backs it up daily with the RKE2 VMs'
+# data disks.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: pingvin-share
+resources:
+  - namespace.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - httproute.yaml
+  - network-policy.yaml

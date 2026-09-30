@@ -1,0 +1,85 @@
+# One replica: SQLite on a ReadWriteOnce volume. Recreate, so the old pod lets
+# the volume go before the new one takes it.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pingvin-share
+  namespace: pingvin-share
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pingvin-share
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pingvin-share
+    spec:
+      # It never talks to the Kubernetes API.
+      automountServiceAccountToken: false
+      # Not root from the start: the image then skips its own user switch
+      # (su-exec) and runs as this user; fsGroup makes the volume its own.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: pingvin-share
+          # Pinned by digest, the multi-arch index. Bumping is its own commit.
+          image: ghcr.io/smp46/pingvin-share-x:v1.22.3@sha256:b77d5989104fb40508b072cec90b85e41bffc9579353c036eb86c6ca0a6d0e3d
+          env:
+            # Traefik is in front: trust its X-Forwarded-* headers.
+            - name: TRUST_PROXY
+              value: "true"
+            # Caddy keeps its state under HOME; the user has no home of its own.
+            - name: HOME
+              value: /tmp
+          ports:
+            - name: http
+              containerPort: 3000
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: data
+              mountPath: /opt/app/backend/data
+            - name: data
+              mountPath: /opt/app/frontend/public/img
+              subPath: images
+            - name: next-cache
+              mountPath: /opt/app/frontend/.next/cache
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 18
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: pingvin-share-data
+        - name: next-cache
+          emptyDir: {}
