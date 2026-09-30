@@ -1,0 +1,76 @@
+# Values for the vault chart (kustomization.yaml pins its version).
+# Pinned by digest, the multi-arch index. Bumping is its own commit, and an
+# upgrade is by hand: the StatefulSet updates OnDelete, one pod at a time,
+# each unsealed again (README.md).
+global:
+  # Traefik ends TLS on the internal path; inside the cluster the API (8200)
+  # is plain HTTP, held in by network-policy.yaml. The cluster port (8201,
+  # Raft and forwarding) is TLS with Vault's own certificates. Pod-to-pod TLS
+  # on the API is a follow-up.
+  tlsDisable: true
+# External Secrets Operator reads Vault later: no agent injector.
+injector:
+  enabled: false
+server:
+  image:
+    repository: hashicorp/vault
+    tag: "2.0.4@sha256:5be49781ecf78bfe775c5309c6a4d9f4e9e040b6c885c99eb2b12fb69855e1a2"
+  updateStrategyType: OnDelete
+  # TokenReview for the Kubernetes auth method; off until something uses it
+  # (External Secrets Operator).
+  authDelegator:
+    enabled: false
+  # No mlock with integrated storage (HashiCorp's advice, disable_mlock
+  # below), so no IPC_LOCK: the pods run under the restricted Pod Security
+  # profile. The chart already sets SKIP_SETCAP.
+  statefulSet:
+    securityContext:
+      pod:
+        runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      container:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  dataStorage:
+    enabled: true
+    size: 5Gi
+    storageClass: longhorn
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        disable_mlock = true
+
+        listener "tcp" {
+          tls_disable     = 1
+          address         = "[::]:8200"
+          cluster_address = "[::]:8201"
+        }
+
+        storage "raft" {
+          path = "/vault/data"
+
+          retry_join {
+            leader_api_addr = "http://vault-0.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-1.vault-internal:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-2.vault-internal:8200"
+          }
+        }
+
+        service_registration "kubernetes" {}
+    disruptionBudget:
+      enabled: true
+      maxUnavailable: 1
