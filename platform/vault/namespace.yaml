@@ -1,0 +1,8 @@
+# Its UI and API attach to the Gateway's internal listener (httproute.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vault
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    gateway.0xc0.cc/internal: "true"

@@ -1,0 +1,33 @@
+# Vault, the cluster's secrets store (phase 3; operator decision, 2026-09-24:
+# in the cluster, deployed from here). Three servers in HA over integrated
+# storage (Raft), one per node, on the WARP-only path at
+# https://vault.int.0xc0.cc: never public.
+#
+# Sealed by Shamir keys, initialised and unsealed by hand after every restart
+# (docs/design.md): no auto-unseal, the keys never touch the cluster or the
+# repos. The runbook is in README.md.
+#
+# Backups: each server's Raft volume (vault-data, 5Gi) is on Longhorn, so PBS
+# backs it up daily with the RKE2 VMs' data disks. A Raft snapshot taken by
+# hand (vault operator raft snapshot save) is the consistent copy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vault
+helmCharts:
+  - name: vault
+    repo: https://helm.releases.hashicorp.com
+    version: 0.34.1
+    releaseName: vault
+    namespace: vault
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    # The chart's Helm test would run as a plain Pod here.
+    skipTests: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - httproute.yaml
+# No pruning: it holds the secrets.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false
