@@ -80,6 +80,11 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   and frequency. Without that, the service is not deployed.
 - **Secrets:** what the cluster needs to boot comes from SOPS+age; everything
   else from Vault, from phase 3. Never a secret in cleartext in a manifest.
+  A component gets its secrets through Vault Secrets Operator: its own
+  `VaultAuth` (Kubernetes auth, role named after its namespace, defined in the
+  `vault` repo) and a `VaultStaticSecret` or `VaultDynamicSecret` per secret.
+  It reads only `platform/<namespace>/*` (an application, `apps/<namespace>/*`).
+  Paths are kebab-case, keys inside snake_case.
 - **Portals** (Grafana, ArgoCD) are internal: reached only over WARP, never
   published (operator decision, 2026-09-29). **Vault, the Kubernetes API and
   other admin interfaces are never published** either.

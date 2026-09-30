@@ -1,0 +1,44 @@
+# Vault Secrets Operator: brings secrets from Vault into Kubernetes Secrets
+# (operator decision, 2026-09-30: VSO, not External Secrets Operator; Vault is
+# the only backend, and VSO renews dynamic secrets' leases and restarts what
+# uses a secret when it changes). No global auth: every namespace brings its
+# own VaultAuth, bound to a Kubernetes auth role in Vault (the vault repo) that
+# reads only its own paths.
+#
+# Backups: no volumes.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vault-secrets-operator
+helmCharts:
+  - name: vault-secrets-operator
+    repo: https://helm.releases.hashicorp.com
+    version: 1.6.0
+    releaseName: vault-secrets-operator
+    namespace: vault-secrets-operator
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    # The chart's Helm test would run as a plain Pod here.
+    skipTests: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+patches:
+  # The chart's pre-delete hook deletes every VSO resource in the cluster
+  # before an uninstall. Argo CD runs it when the Application is deleted, and
+  # gives the Application a finalizer for it: a GitOps-managed operator never
+  # wipes its resources as a side effect.
+  - target:
+      kind: Job
+      name: pdcc-vault-secrets-operator
+    patch: |-
+      $patch: delete
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: pdcc-vault-secrets-operator
+# No pruning: it brings CRDs. And no dry run for a kind whose CRD is not there
+# yet: the default VaultConnection is one of the chart's own custom resources,
+# synced with its CRD on the first sync.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false,SkipDryRunOnMissingResource=true
