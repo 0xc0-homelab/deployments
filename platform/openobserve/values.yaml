@@ -20,6 +20,11 @@ config:
   # Bounded caches, so it stays inside its memory limit. In MB.
   ZO_MEMORY_CACHE_MAX_SIZE: "256"
   ZO_MEMORY_CACHE_DATAFUSION_MAX_SIZE: "256"
+  # Ingestion: room for what arrives before it reaches the disk, which it does
+  # every 2 minutes instead of 10. With its automatic size the memtable
+  # overflowed on a thousand metric streams, and every write got a 503.
+  ZO_MEM_TABLE_MAX_SIZE: "512"
+  ZO_MAX_FILE_RETENTION_TIME: "120"
 
 persistence:
   enabled: true
@@ -35,9 +40,10 @@ securityContext:
     type: RuntimeDefault
 
 # Little CPU to reserve: the nodes' requests are already high.
+# Measured at 1.3 GiB with every target in (2026-10-01).
 resources:
   requests:
     cpu: 100m
-    memory: 512Mi
+    memory: 1Gi
   limits:
-    memory: 2Gi
+    memory: 3Gi
