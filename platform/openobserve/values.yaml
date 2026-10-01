@@ -13,6 +13,10 @@ config:
   # Warnings and errors only. At info, it logs every ingestion request, the
   # collectors bring those lines back, and they were 98% of all logs.
   RUST_LOG: warn
+  # On by default, and not under RUST_LOG: it prints the SQL and the physical
+  # plan of every query and every compaction straight to stdout, ~3,500 lines
+  # a minute, each line a record once collected.
+  ZO_PRINT_KEY_SQL: "false"
   # 30 days of everything; the volume is sized for it.
   ZO_COMPACT_DATA_RETENTION_DAYS: "30"
   # Nothing leaves for OpenObserve's servers: no telemetry, no GeoIP download.
