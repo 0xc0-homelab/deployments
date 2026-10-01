@@ -50,6 +50,42 @@ agent:
       memory: 128Mi
     limits:
       memory: 512Mi
+  # Every log's level, from its body: each component writes it its own way,
+  # and the container runtime's format carries none. Tried in order, the first
+  # match wins: JSON ("level":"info", VSO, etcd), logfmt (level=info: ArgoCD,
+  # Longhorn, external-dns, CrowdSec), klog (I1002 ...: the Kubernetes
+  # components), brackets ([INFO]: Vault), a word after the timestamp (INF,
+  # WARN, info: Traefik, OpenObserve, the collector). Then one spelling each,
+  # and the matching severity number.
+  processors:
+    transform/severity:
+      error_mode: ignore
+      log_statements:
+        - context: log
+          statements:
+            - merge_maps(cache, ExtractPatterns(body, "\"(?:level|lvl|severity)\"\\s*:\\s*\"(?P<lvl>[A-Za-z]+)\""), "upsert") where IsString(body) and IsMatch(body, "\"(level|lvl|severity)\"\\s*:\\s*\"[A-Za-z]")
+            - merge_maps(cache, ExtractPatterns(body, "\\blevel=\"?(?P<lvl>[A-Za-z]+)"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "\\blevel=\"?[A-Za-z]")
+            - merge_maps(cache, ExtractPatterns(body, "^(?P<lvl>[IWEF])\\d{4} \\d{2}:"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "^[IWEF]\\d{4} \\d{2}:")
+            - merge_maps(cache, ExtractPatterns(body, "\\[(?P<lvl>TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\]"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "\\[(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\]")
+            - merge_maps(cache, ExtractPatterns(body, "^\\S+\\s+(?P<lvl>(?i:trace|debug|info|warn|warning|error|fatal|inf|wrn|err|dbg|ftl))\\b"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "^\\S+\\s+(?i:trace|debug|info|warn|warning|error|fatal|inf|wrn|err|dbg|ftl)\\b")
+            - set(severity_text, ToUpperCase(cache["lvl"])) where cache["lvl"] != nil
+            - set(severity_text, "INFO") where severity_text == "I" or severity_text == "INF"
+            - set(severity_text, "WARN") where severity_text == "W" or severity_text == "WRN" or severity_text == "WARNING"
+            - set(severity_text, "ERROR") where severity_text == "E" or severity_text == "ERR"
+            - set(severity_text, "FATAL") where severity_text == "F" or severity_text == "FTL"
+            - set(severity_text, "DEBUG") where severity_text == "DBG"
+            - set(severity_number, SEVERITY_NUMBER_TRACE) where severity_text == "TRACE"
+            - set(severity_number, SEVERITY_NUMBER_DEBUG) where severity_text == "DEBUG"
+            - set(severity_number, SEVERITY_NUMBER_INFO) where severity_text == "INFO"
+            - set(severity_number, SEVERITY_NUMBER_WARN) where severity_text == "WARN"
+            - set(severity_number, SEVERITY_NUMBER_ERROR) where severity_text == "ERROR"
+            - set(severity_number, SEVERITY_NUMBER_FATAL) where severity_text == "FATAL"
+  service:
+    pipelines:
+      logs:
+        receivers: [filelog/std]
+        processors: [memory_limiter, transform/severity, resourcedetection, attributes, k8sattributes, batch]
+        exporters: [otlphttp/openobserve]
 
 # One replica: traces (OTLP), Kubernetes events, and every Prometheus target,
 # from the ServiceMonitors through the target allocator.
