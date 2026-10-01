@@ -20,6 +20,7 @@ helmCharts:
 resources:
   - namespace.yaml
   - network-policy.yaml
+  - vault-secrets.yaml
   - ui.yaml
 patches:
   # The chart's pre-delete hook uninstalls Longhorn. Argo CD runs it when the

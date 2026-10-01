@@ -15,21 +15,24 @@ agent:
   env:
     - name: COLLECTIONS
       value: crowdsecurity/traefik
-# The LAPI's shared secret and AppSec's registration token, a boot secret
-# (the cluster_secrets role in infrastructure, from SOPS). Left to the chart,
+# The LAPI's shared secret and AppSec's registration token, from Vault
+# (platform/crowdsec/lapi) through Vault Secrets Operator (vault-secrets.yaml).
+# Left to the chart,
 # they are random on every render: ArgoCD would rewrite them and roll the
 # LAPI on each sync.
 secrets:
   externalSecret:
-    name: crowdsec-lapi
+    name: crowdsec-lapi-vault
+    csLapiSecretKey: lapi_secret
+    registrationTokenKey: registration_token
 lapi:
-  # The bouncer's key comes from a boot secret (the cluster_secrets role in
-  # infrastructure, from SOPS), never from here.
+  # The bouncer's key comes from Vault (platform/shared/crowdsec-bouncer),
+  # through Vault Secrets Operator (vault-secrets.yaml), never from here.
   env:
     - name: BOUNCER_KEY_traefik
       valueFrom:
         secretKeyRef:
-          name: crowdsec-bouncer-key
+          name: crowdsec-bouncer-vault
           key: key
   # Its database and its credentials, on Longhorn (the default StorageClass).
   persistentVolume:
