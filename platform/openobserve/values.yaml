@@ -15,8 +15,10 @@ config:
   # Nothing leaves for OpenObserve's servers: no telemetry, no GeoIP download.
   ZO_TELEMETRY: "false"
   ZO_MMDB_DISABLE_DOWNLOAD: "true"
-  # Its own metrics, ingested by itself: no scrape needed.
-  ZO_SELF_METRIC_CONSUMPTION_ENABLED: "true"
+  # Its own metrics (zo_*) on /metrics, scraped by the collector through the
+  # ServiceMonitor below. Self-consumption stays off: it ingests nothing
+  # without an accept list, and the scrape covers it.
+  ZO_PROMETHEUS_ENABLED: "true"
   # Bounded caches, so it stays inside its memory limit. In MB.
   ZO_MEMORY_CACHE_MAX_SIZE: "256"
   ZO_MEMORY_CACHE_DATAFUSION_MAX_SIZE: "256"
@@ -51,3 +53,6 @@ resources:
     memory: 1Gi
   limits:
     memory: 3Gi
+
+serviceMonitor:
+  enabled: true

@@ -51,13 +51,22 @@ folders are left alone, so the UI stays free for trying things.
 - **From the community repository**
   ([openobserve/dashboards](https://github.com/openobserve/dashboards)): the
   Kubernetes ones built for this collector (overview, nodes, node pressure,
-  namespaces, pods, events), the API server, host metrics, ArgoCD, traces, and
-  OpenObserve's own. Left out: the "Compute Resources" ones, built on
-  kube-prometheus-stack's recording rules, which do not exist here; and
-  "Namespace (Objects)", built on the object watches the collector does not
-  run.
-- **The homelab's own**, for what the repository has nothing for: Traefik,
-  Longhorn, Vault, CrowdSec and etcd. PromQL over what the collector scrapes.
+  namespaces, pods, events), host metrics, ArgoCD and traces. Node pressure is
+  rewritten on kube-state-metrics' `kube_node_status_condition`: its own
+  queries need the collector's k8s_cluster receiver, which this chart does not
+  run. Left out, because they do not work here:
+  - the API server and "Compute Resources" ones, built on
+    kube-prometheus-stack's recording rules;
+  - "Namespace (Objects)", built on the object watches the collector does not
+    run;
+  - OpenObserve's "Internals" and "Infrastructure", built for a cluster
+    (querier, ingester pods). Its own `zo_*` metrics are scraped
+    (`ZO_PROMETHEUS_ENABLED`, the chart's ServiceMonitor): a dashboard for
+    them, for one node, is still to make.
+- **The homelab's own**, for what the repository has nothing for, or nothing
+  that works here: the Kubernetes API server, Traefik, Longhorn, Vault,
+  CrowdSec and etcd. PromQL over what the collector scrapes; every query was
+  checked against OpenObserve before it was committed.
 
 **Changing or adding one:** edit it in the UI in any folder but `homelab`,
 export it (dashboard → settings → export JSON), save it here as

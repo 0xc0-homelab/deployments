@@ -28,7 +28,7 @@
      "queryType": "promql",
      "queries": [
       {
-       "query": "k8s_node_condition_disk_pressure{k8s_cluster=~\"$k8s_cluster_name\"}",
+       "query": "kube_node_status_condition{condition=\"DiskPressure\",status=\"true\"}",
        "vrlFunctionQuery": null,
        "customQuery": true,
        "fields": {
@@ -45,7 +45,7 @@
         }
        },
        "config": {
-        "promql_legend": "{k8s_node_name}",
+        "promql_legend": "{node}",
         "layer_type": "scatter",
         "weight_fixed": 1,
         "limit": 0,
@@ -82,7 +82,7 @@
      "queryType": "promql",
      "queries": [
       {
-       "query": "k8s_node_condition_memory_pressure{k8s_cluster=~\"$k8s_cluster_name\"}",
+       "query": "kube_node_status_condition{condition=\"MemoryPressure\",status=\"true\"}",
        "vrlFunctionQuery": null,
        "customQuery": true,
        "fields": {
@@ -99,7 +99,7 @@
         }
        },
        "config": {
-        "promql_legend": "{k8s_node_name}",
+        "promql_legend": "{node}",
         "layer_type": "scatter",
         "weight_fixed": 1,
         "limit": 0,
@@ -136,7 +136,7 @@
      "queryType": "promql",
      "queries": [
       {
-       "query": "k8s_node_condition_pid_pressure{k8s_cluster=~\"$k8s_cluster_name\"}",
+       "query": "kube_node_status_condition{condition=\"PIDPressure\",status=\"true\"}",
        "vrlFunctionQuery": null,
        "customQuery": true,
        "fields": {
@@ -153,7 +153,7 @@
         }
        },
        "config": {
-        "promql_legend": "{k8s_node_name}",
+        "promql_legend": "{node}",
         "layer_type": "scatter",
         "weight_fixed": 1,
         "limit": 0,
