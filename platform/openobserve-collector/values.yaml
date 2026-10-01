@@ -97,8 +97,36 @@ gateway:
     k8sobjects/replicasets: null
     k8sobjects/limitranges: null
     k8sobjects/resourcequotas: null
+  processors:
+    # What no dashboard uses and costs the most to keep: Go's runtime metrics
+    # of every component, etcd's debugging ones, the controllers' and
+    # Longhorn's internal queues and clients, Vault's per-route and storage
+    # internals. Measured on 2026-10-02, the families that filled the volume.
+    filter/noise:
+      error_mode: ignore
+      metrics:
+        metric:
+          - IsMatch(name, "^go_")
+          - IsMatch(name, "^kubernetes_feature_enabled$")
+          - IsMatch(name, "^grpc_server_")
+          - IsMatch(name, "^etcd_debugging_")
+          - IsMatch(name, "^(workqueue|rest_client)_")
+          - IsMatch(name, "^longhorn_(rest_client|workqueue)_")
+          - IsMatch(name, "^vault_(route|rollback|runtime|raft_storage_bolt)_")
+    # The API server's latency histogram, by verb only: by resource and scope
+    # it was millions of rows an hour, for a p99 by verb.
+    transform/aggregate:
+      error_mode: ignore
+      metric_statements:
+        - context: metric
+          statements:
+            - aggregate_on_attributes("sum", ["verb"]) where name == "apiserver_request_duration_seconds"
   service:
     pipelines:
+      metrics:
+        receivers: [otlp, servicegraph, prometheus]
+        processors: [memory_limiter, filter/noise, transform/aggregate, resourcedetection, attributes, k8sattributes, batch]
+        exporters: [otlphttp/openobserve]
       logs/k8s_events:
         receivers: [k8sobjects/events]
         processors: [memory_limiter, resourcedetection, attributes, k8sattributes, batch]

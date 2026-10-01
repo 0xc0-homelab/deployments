@@ -10,6 +10,9 @@ auth:
 
 config:
   ZO_WEB_URL: https://o2.int.0xc0.cc
+  # Warnings and errors only. At info, it logs every ingestion request, the
+  # collectors bring those lines back, and they were 98% of all logs.
+  RUST_LOG: warn
   # 30 days of everything; the volume is sized for it.
   ZO_COMPACT_DATA_RETENTION_DAYS: "30"
   # Nothing leaves for OpenObserve's servers: no telemetry, no GeoIP download.
