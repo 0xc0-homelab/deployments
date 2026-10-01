@@ -39,18 +39,46 @@ Rotating the password is therefore two steps, in this order:
 
 Between the two, the collectors are refused (401) and buffer what they can.
 
-## After the first sync, by hand
+## Dashboards: from git
 
-- **Dashboards:** import the Kubernetes ones from
-  [openobserve/dashboards](https://github.com/openobserve/dashboards)
-  (Dashboards → Import), and the components' that exist there (Traefik,
-  Longhorn, Vault, CrowdSec, etcd). They live in OpenObserve's own store, on
-  the volume, not in this repo.
-- **Alerts:** the Kubernetes alert rules from the same repository. Their
-  destination (mail, Telegram, ntfy) is the operator's choice, still pending.
-- **Check every target is up:** the target allocator lists them:
+Every dashboard is a JSON file in `dashboards/`, imported into the `homelab`
+folder by a PostSync Job after every sync (`dashboards.yaml`,
+`dashboards/import.py`): updated by title, created when new, and deleted from
+the folder when its file is gone. Git wins: an edit made in the UI to a
+dashboard in `homelab` is overwritten on the next sync. Dashboards in other
+folders are left alone, so the UI stays free for trying things.
 
-  ```sh
-  kubectl -n openobserve-collector port-forward svc/openobserve-collector-gateway-targetallocator 8080:80
-  curl -s localhost:8080/jobs | jq 'keys'
-  ```
+- **From the community repository**
+  ([openobserve/dashboards](https://github.com/openobserve/dashboards)): the
+  Kubernetes ones built for this collector (overview, nodes, node pressure,
+  namespaces, pods, events), the API server, host metrics, ArgoCD, traces, and
+  OpenObserve's own. Left out: the "Compute Resources" ones, built on
+  kube-prometheus-stack's recording rules, which do not exist here; and
+  "Namespace (Objects)", built on the object watches the collector does not
+  run.
+- **The homelab's own**, for what the repository has nothing for: Traefik,
+  Longhorn, Vault, CrowdSec and etcd. PromQL over what the collector scrapes.
+
+**Changing or adding one:** edit it in the UI in any folder but `homelab`,
+export it (dashboard → settings → export JSON), save it here as
+`dashboards/<name>.json`, one-space indented, add it to `configMapGenerator`
+in `kustomization.yaml`, and open a PR. The title is its key: renaming it is a
+delete and a create.
+
+The ConfigMap holds every dashboard, and a ConfigMap's limit is 1 MiB: about
+700 KiB today, most of it the cluster overview. Past roughly 900 KiB, split
+the files into a second ConfigMap mounted next to the first.
+
+## Alerts
+
+None yet (operator decision, 2026-10-02). When they come, mail can go to
+sergio@0xc0.cc, which Cloudflare Email Routing forwards (infrastructure#157).
+
+## Checking every target is up
+
+The target allocator lists them:
+
+```sh
+kubectl -n openobserve-collector port-forward deploy/openobserve-collector-gateway-targetallocator 8080:8080
+curl -s localhost:8080/jobs | jq 'keys'
+```

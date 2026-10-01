@@ -23,6 +23,37 @@ resources:
   - network-policy.yaml
   - vault-secrets.yaml
   - httproute.yaml
+  - dashboards.yaml
+# The dashboards and their importer, mounted by the dashboards Job. No name
+# hash: a changed dashboard is a diff of this ConfigMap, so a sync, which runs
+# the Job (a PostSync hook) again; a hashed name would leave every old one
+# behind, since nothing here is pruned.
+generatorOptions:
+  disableNameSuffixHash: true
+configMapGenerator:
+  - name: openobserve-dashboards
+    files:
+      - dashboards/argocd-monitoring.json
+      - dashboards/crowdsec.json
+      - dashboards/etcd.json
+      - dashboards/host-metrics.json
+      - dashboards/import.py
+      - dashboards/kubernetes-api-server.json
+      - dashboards/kubernetes-clusters-overview.json
+      - dashboards/kubernetes-events.json
+      - dashboards/kubernetes-namespace-pod.json
+      - dashboards/kubernetes-namespace-pods.json
+      - dashboards/kubernetes-namespaces.json
+      - dashboards/kubernetes-node-pods.json
+      - dashboards/kubernetes-nodes-pressure.json
+      - dashboards/kubernetes-nodes.json
+      - dashboards/longhorn.json
+      - dashboards/openobserve-infrastructure.json
+      - dashboards/openobserve-internals.json
+      - dashboards/traces-by-service.json
+      - dashboards/traces-overall.json
+      - dashboards/traefik.json
+      - dashboards/vault.json
 # No pruning: it holds data.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false
