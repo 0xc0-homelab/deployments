@@ -16,7 +16,9 @@ rotating a secret"):
 export VAULT_ADDR=https://vault.int.0xc0.cc
 mise exec -- vault login -no-print
 mise exec -- vault kv put -mount=platform shared/openobserve-root email=<your email>
-openssl rand -base64 24 | mise exec -- vault kv patch -mount=platform shared/openobserve-root password=-
+# key=- stores stdin as it is: strip openssl's trailing newline, or it becomes
+# part of the password.
+openssl rand -base64 24 | tr -d '\n' | mise exec -- vault kv patch -mount=platform shared/openobserve-root password=-
 mise exec -- vault kv metadata put -mount=platform \
   -custom-metadata=owner=operator -custom-metadata=rotated_at="$(date +%F)" shared/openobserve-root
 rm -f ~/.vault-token
@@ -25,11 +27,17 @@ rm -f ~/.vault-token
 To log in, read the password when needed:
 `vault kv get -mount=platform -field=password shared/openobserve-root`.
 
-Rotating it is a `kv patch` of `password`: Vault Secrets Operator rewrites both
-Secrets within the hour and restarts OpenObserve and the collectors. Whether
-OpenObserve also updates an existing root user's password from the
-environment is to be confirmed on the first rotation: if the collectors are
-refused afterwards (401 in their logs), change it in the UI too.
+OpenObserve creates its root user from the environment once, on its first
+start, and never updates it from there (seen on the first sync, 2026-10-01).
+Rotating the password is therefore two steps, in this order:
+
+1. Change it in OpenObserve (the UI, user settings, or its users API), to the
+   new value.
+2. Write the same value to Vault with `kv patch`. Vault Secrets Operator
+   rewrites both Secrets within the hour and restarts OpenObserve and the
+   collectors, which then send with it.
+
+Between the two, the collectors are refused (401) and buffer what they can.
 
 ## After the first sync, by hand
 
