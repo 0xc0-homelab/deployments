@@ -1,0 +1,26 @@
+# The OpenTelemetry Operator: it runs the collectors that feed OpenObserve
+# (openobserve-collector) from their OpenTelemetryCollector resources, with the
+# target allocator that turns the cluster's ServiceMonitors into scrape jobs.
+# Its admission webhook gets its certificate from the cert-manager already here.
+# Auto-instrumentation comes with the applications, in phase 6.
+#
+# Backups: no volumes.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: opentelemetry-operator
+helmCharts:
+  - name: opentelemetry-operator
+    repo: https://open-telemetry.github.io/opentelemetry-helm-charts
+    version: 0.124.1
+    releaseName: opentelemetry-operator
+    namespace: opentelemetry-operator
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    skipTests: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+# No pruning: it brings CRDs, and the collectors hang off them.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

@@ -34,3 +34,6 @@ txtOwnerId: homelab-prod
 txtPrefix: extdns-
 extraArgs:
   - --cloudflare-proxied
+# Metrics (7979) for OpenObserve's collector.
+serviceMonitor:
+  enabled: true

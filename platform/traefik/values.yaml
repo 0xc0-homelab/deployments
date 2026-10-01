@@ -160,3 +160,24 @@ volumes:
   - name: crowdsec-bouncer-vault
     mountPath: /etc/traefik/crowdsec
     type: secret
+# Metrics for OpenObserve's collector (platform/openobserve-collector): a
+# dedicated ClusterIP Service on the metrics entrypoint (9100, not exposed on
+# the NodePort Service) and the ServiceMonitor that scrapes it. The API check
+# is off: Kustomize renders without the cluster's API versions, and the CRD
+# comes from platform/prometheus-operator-crds.
+metrics:
+  prometheus:
+    disableAPICheck: true
+    service:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+# Traces to the same collector, over OTLP gRPC. Plain, in-cluster. Every
+# request is traced (the default sample rate, 1.0): traffic is low.
+tracing:
+  otlp:
+    enabled: true
+    grpc:
+      enabled: true
+      endpoint: openobserve-collector-gateway-collector.openobserve-collector.svc.cluster.local:4317
+      insecure: true

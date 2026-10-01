@@ -1,0 +1,28 @@
+# OpenObserve: the cluster's metrics, logs and traces in one backend, with its
+# own dashboards and alerts (operator decision, 2026-10-01). Single node, local
+# disk, sqlite for its metadata; on the WARP-only path,
+# https://o2.int.0xc0.cc. The collectors (openobserve-collector) send to it.
+#
+# Backups: data-openobserve-0 (Longhorn, 50 Gi), covered by PBS's nightly backup
+# of the RKE2 VMs. It is telemetry: losing it loses history, nothing the
+# cluster needs to run.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: openobserve
+helmCharts:
+  - name: openobserve-standalone
+    repo: https://charts.openobserve.ai
+    version: 1.0.1
+    releaseName: openobserve
+    namespace: openobserve
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - vault-secrets.yaml
+  - httproute.yaml
+# No pruning: it holds data.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

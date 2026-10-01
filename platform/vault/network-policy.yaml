@@ -1,9 +1,10 @@
 # Vault denies ingress but what it needs. Its API (8200) takes Traefik, Vault
 # Secrets Operator's controller (which reads secrets for every namespace, each
-# with its own Kubernetes auth role) and the other servers (Raft's joins). Its
-# cluster port (8201: Raft and request forwarding) takes the other servers
-# only. Egress stays open: the Kubernetes API, for service registration and
-# TokenReview. kubelet's probes come from the pod's own node, always allowed.
+# with its own Kubernetes auth role), OpenObserve's collector (metrics) and the
+# other servers (Raft's joins). Its cluster port (8201: Raft and request
+# forwarding) takes the other servers only. Egress stays open: the Kubernetes
+# API, for service registration and TokenReview. kubelet's probes come from
+# the pod's own node, always allowed.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -41,6 +42,14 @@ spec:
             matchLabels:
               app.kubernetes.io/name: vault-secrets-operator
               control-plane: controller-manager
+        # OpenObserve's collector, for /v1/sys/metrics (serverTelemetry): the
+        # same port, so one more source rather than a second policy.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve-collector
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: vault

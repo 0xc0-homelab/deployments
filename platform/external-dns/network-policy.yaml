@@ -1,5 +1,5 @@
-# external-dns takes no connections: its metrics (7979) stay closed, and
-# kubelet's probes come from the pod's own node, always allowed. Egress stays
+# external-dns takes no connections but its metrics (7979), which only
+# OpenObserve's collector scrapes. kubelet's probes come from the pod's own node, always allowed. Egress stays
 # open, for Cloudflare's API.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -10,3 +10,27 @@ spec:
   podSelector: {}
   policyTypes:
     - Ingress
+---
+# external-dns's metrics, scraped by OpenObserve's collector only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metrics-from-collector
+  namespace: external-dns
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: external-dns
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve-collector
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+      ports:
+        - protocol: TCP
+          port: 7979

@@ -8,6 +8,10 @@ image:
 # One agent per node, reading Traefik's access logs (JSON) for behaviour:
 # scans, brute force, known-bad bots.
 agent:
+  # Metrics (6060) for OpenObserve's collector.
+  metrics:
+    serviceMonitor:
+      enabled: true
   acquisition:
     - namespace: traefik
       podName: traefik-*
@@ -26,6 +30,10 @@ secrets:
     csLapiSecretKey: lapi_secret
     registrationTokenKey: registration_token
 lapi:
+  # Metrics (6060) for OpenObserve's collector.
+  metrics:
+    serviceMonitor:
+      enabled: true
   # The bouncer's key comes from Vault (platform/shared/crowdsec-bouncer),
   # through Vault Secrets Operator (vault-secrets.yaml), never from here.
   env:
@@ -49,6 +57,10 @@ lapi:
 # through a drain).
 appsec:
   enabled: true
+  # Metrics (6060) for OpenObserve's collector.
+  metrics:
+    serviceMonitor:
+      enabled: true
   replicas: 2
   strategy:
     type: RollingUpdate

@@ -1,4 +1,5 @@
-# cert-manager's pods deny ingress but the webhook. The metrics stay closed;
+# cert-manager's pods deny ingress but the webhook. Its metrics (9402)
+# are open to OpenObserve's collector only;
 # kubelet's probes come from the pod's own node, always allowed. Egress stays
 # open: Let's Encrypt, Cloudflare's API and its resolvers.
 apiVersion: networking.k8s.io/v1
@@ -29,3 +30,28 @@ spec:
     - ports:
         - protocol: TCP
           port: 10250
+---
+# The controller's and the webhook's metrics, scraped by OpenObserve's collector
+# only. The instance label selects both.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metrics-from-collector
+  namespace: cert-manager
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: cert-manager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve-collector
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+      ports:
+        - protocol: TCP
+          port: 9402

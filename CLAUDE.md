@@ -33,7 +33,7 @@ Operator are in, monitoring comes next.
 
 One RKE2 cluster, in the `platform` zone, holds everything after phase 1:
 
-- **Shared services**: ArgoCD, Vault, Prometheus and Grafana, data services
+- **Shared services**: ArgoCD, Vault, OpenObserve (metrics, logs, traces), data services
   (Postgres, Redis).
 - **Applications**.
 
@@ -89,7 +89,7 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   It reads only `platform/<namespace>/*` (an application, `apps/<namespace>/*`),
   and the `shared/<name>` secrets its policy grants by name.
   Paths are kebab-case, keys inside snake_case.
-- **Portals** (Grafana, ArgoCD) are internal: reached only over WARP, never
+- **Portals** (OpenObserve, ArgoCD) are internal: reached only over WARP, never
   published (operator decision, 2026-09-29). **Vault, the Kubernetes API and
   other admin interfaces are never published** either.
 

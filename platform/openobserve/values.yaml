@@ -1,0 +1,43 @@
+fullnameOverride: openobserve
+
+# The root user from Vault (platform/shared/openobserve-root), through Vault
+# Secrets Operator (vault-secrets.yaml): never in this file.
+auth:
+  existingRootUserSecret:
+    name: openobserve-root-vault
+    emailKey: ZO_ROOT_USER_EMAIL
+    passwordKey: ZO_ROOT_USER_PASSWORD
+
+config:
+  ZO_WEB_URL: https://o2.int.0xc0.cc
+  # 30 days of everything; the volume is sized for it.
+  ZO_COMPACT_DATA_RETENTION_DAYS: "30"
+  # Nothing leaves for OpenObserve's servers: no telemetry, no GeoIP download.
+  ZO_TELEMETRY: "false"
+  ZO_MMDB_DISABLE_DOWNLOAD: "true"
+  # Its own metrics, ingested by itself: no scrape needed.
+  ZO_SELF_METRIC_CONSUMPTION_ENABLED: "true"
+  # Bounded caches, so it stays inside its memory limit. In MB.
+  ZO_MEMORY_CACHE_MAX_SIZE: "256"
+  ZO_MEMORY_CACHE_DATAFUSION_MAX_SIZE: "256"
+
+persistence:
+  enabled: true
+  size: 50Gi
+  storageClass: longhorn
+
+# Pod Security "restricted".
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+  seccompProfile:
+    type: RuntimeDefault
+
+# Little CPU to reserve: the nodes' requests are already high.
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
