@@ -22,11 +22,12 @@ What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
 Operator decision, 2026-09-29 (#16): an ApplicationSet over Kustomize
 components, instead of hand-written `Application`s with inline values.
 
-## CURRENT PHASE: 2 (Cluster)
+## CURRENT PHASE: 3 (Platform)
 
-Phase 2 builds the RKE2 cluster and ArgoCD (workspace `docs/design.md`). The
-cluster exists; ArgoCD syncs `bootstrap/prod/`, and through it `platform/`,
-from `main`.
+Phase 2 built the RKE2 cluster and ArgoCD (workspace `docs/design.md`):
+ArgoCD syncs `bootstrap/prod/`, and through it `platform/`, from `main`.
+Phase 3 brings the platform's shared services: Vault and Vault Secrets
+Operator are in, monitoring comes next.
 
 ## What goes where
 
@@ -78,12 +79,15 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
   NetworkPolicies. Data services accept connections and initiate none.
 - **Every persistent volume declares its backup** in a comment: destination
   and frequency. Without that, the service is not deployed.
-- **Secrets:** what the cluster needs to boot comes from SOPS+age; everything
-  else from Vault, from phase 3. Never a secret in cleartext in a manifest.
-  A component gets its secrets through Vault Secrets Operator: its own
+- **Secrets:** all from Vault, never in this repo, not even encrypted
+  (.github#6). What RKE2 and ArgoCD boot with (the RKE2 token, ArgoCD's admin
+  password) Ansible reads from Vault in `infrastructure`; everything else
+  reaches the cluster through Vault Secrets Operator. A component gets its
+  secrets through Vault Secrets Operator: its own
   `VaultAuth` (Kubernetes auth, role named after its namespace, defined in the
   `vault` repo) and a `VaultStaticSecret` or `VaultDynamicSecret` per secret.
-  It reads only `platform/<namespace>/*` (an application, `apps/<namespace>/*`).
+  It reads only `platform/<namespace>/*` (an application, `apps/<namespace>/*`),
+  and the `shared/<name>` secrets its policy grants by name.
   Paths are kebab-case, keys inside snake_case.
 - **Portals** (Grafana, ArgoCD) are internal: reached only over WARP, never
   published (operator decision, 2026-09-29). **Vault, the Kubernetes API and
