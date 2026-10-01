@@ -61,11 +61,11 @@ folders are left alone, so the UI stays free for trying things.
     run;
   - OpenObserve's "Internals" and "Infrastructure", built for a cluster
     (querier, ingester pods). Its own `zo_*` metrics are scraped
-    (`ZO_PROMETHEUS_ENABLED`, the chart's ServiceMonitor): a dashboard for
-    them, for one node, is still to make.
+    (`ZO_PROMETHEUS_ENABLED`, the chart's ServiceMonitor) into one of ours
+    instead.
 - **The homelab's own**, for what the repository has nothing for, or nothing
   that works here: the Kubernetes API server, Traefik, Longhorn, Vault,
-  CrowdSec and etcd. PromQL over what the collector scrapes; every query was
+  CrowdSec, etcd and OpenObserve itself. PromQL over what the collector scrapes; every query was
   checked against OpenObserve before it was committed.
 
 **Changing or adding one:** edit it in the UI in any folder but `homelab`,
