@@ -153,9 +153,10 @@ experimental:
     crowdsec-bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
       version: v1.7.1
-# The bouncer's LAPI key, a boot secret (the cluster_secrets role in
-# infrastructure, from SOPS), read by the plugin as a file.
+# The bouncer's LAPI key, from Vault (platform/shared/crowdsec-bouncer)
+# through Vault Secrets Operator (vault-secrets.yaml), read by the plugin as a
+# file.
 volumes:
-  - name: crowdsec-bouncer-key
+  - name: crowdsec-bouncer-vault
     mountPath: /etc/traefik/crowdsec
     type: secret
