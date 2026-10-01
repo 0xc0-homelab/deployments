@@ -21,8 +21,8 @@ k -n vault exec vault-0 -- vault operator init -key-shares=5 -key-threshold=3
 ```
 
 Keep the five keys and the root token **off the cluster and off the repos**:
-in the operator's password manager, and a copy offline. Never in SOPS:
-whoever holds the age key would then hold Vault too.
+in the operator's password manager, and a copy offline. Never in Vault
+itself, nor in any repo, encrypted or not.
 
 ## After every restart: unseal
 
