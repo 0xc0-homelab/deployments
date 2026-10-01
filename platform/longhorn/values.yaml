@@ -67,3 +67,7 @@ networkPolicies:
   type: rke2
   kubeAPIServerSourceCIDRs: []
   v1DataEngineInitiatorSourceCIDRs: []
+# The manager's metrics (9500) for OpenObserve's collector.
+metrics:
+  serviceMonitor:
+    enabled: true

@@ -1,0 +1,21 @@
+manager:
+  # The collectors' image: the "k8s" distribution, which carries every
+  # receiver the openobserve collector uses (filelog, kubeletstats, hostmetrics,
+  # k8sobjects, prometheus).
+  collectorImage:
+    repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+    tag: 0.160.0
+  # Little CPU to reserve: the nodes' requests are already high.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+# The webhook's certificate from cert-manager, self-signed by its own Issuer.
+admissionWebhooks:
+  certManager:
+    enabled: true
+  autoGenerateCert:
+    enabled: false

@@ -1,0 +1,105 @@
+fullnameOverride: openobserve-collector
+
+# Both send to OpenObserve inside the cluster, as its root user. The header
+# takes O2_AUTH from the pods' environment (kustomization.yaml patches it in
+# from vault-secrets.yaml): no credential in this file.
+exporters:
+  otlphttp/openobserve:
+    endpoint: http://openobserve.openobserve.svc.cluster.local:5080/api/default/
+    headers:
+      Authorization: "Basic ${env:O2_AUTH}"
+  otlphttp/openobserve_k8s_events:
+    endpoint: http://openobserve.openobserve.svc.cluster.local:5080/api/default/
+    headers:
+      Authorization: "Basic ${env:O2_AUTH}"
+      stream-name: k8s_events
+
+k8sCluster: homelab-prod
+
+# The image the operator's collector image would be, pinned with the chart.
+image:
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+  tag: "0.158.0"
+
+# kube-state-metrics, in kube-system as the gateway's job expects.
+kube-state-metrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+# No applications yet: auto-instrumentation comes in phase 6.
+autoinstrumentation:
+  enabled: false
+
+# One per node: every container's logs, and the node's and the pods' metrics.
+agent:
+  # Rocky's SELinux keeps a container from reading /var/log/pods: the chart's
+  # documented way through, which is why the namespace is privileged.
+  securityContext:
+    privileged: true
+    runAsUser: 0
+    seLinuxOptions:
+      type: spc_t
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+# One replica: traces (OTLP), Kubernetes events, and every Prometheus target,
+# from the ServiceMonitors through the target allocator.
+gateway:
+  targetAllocator:
+    enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        memory: 256Mi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+  # Only the events: the other object watches copy every configmap, role and
+  # service account into a stream, for little use and much memory.
+  receivers:
+    k8sobjects/pods: null
+    k8sobjects/nodes: null
+    k8sobjects/deployments: null
+    k8sobjects/services: null
+    k8sobjects/namespaces: null
+    k8sobjects/pvcs: null
+    k8sobjects/daemonsets: null
+    k8sobjects/statefulsets: null
+    k8sobjects/ingresses: null
+    k8sobjects/jobs: null
+    k8sobjects/cronjobs: null
+    k8sobjects/persistentvolumes: null
+    k8sobjects/serviceaccounts: null
+    k8sobjects/roles: null
+    k8sobjects/clusterroles: null
+    k8sobjects/rolebindings: null
+    k8sobjects/clusterrolebindings: null
+    k8sobjects/hpa: null
+    k8sobjects/crds: null
+    k8sobjects/storageclasses: null
+    k8sobjects/configmaps: null
+    k8sobjects/networkpolicies: null
+    k8sobjects/endpoints: null
+    k8sobjects/replicasets: null
+    k8sobjects/limitranges: null
+    k8sobjects/resourcequotas: null
+  service:
+    pipelines:
+      logs/k8s_events:
+        receivers: [k8sobjects/events]
+        processors: [memory_limiter, resourcedetection, attributes, k8sattributes, batch]
+        exporters: [otlphttp/openobserve_k8s_events]

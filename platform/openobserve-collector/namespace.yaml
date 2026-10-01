@@ -1,0 +1,8 @@
+# Privileged: the agent reads every pod's logs and the node's metrics from
+# hostPath, past SELinux (values.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openobserve-collector
+  labels:
+    pod-security.kubernetes.io/enforce: privileged

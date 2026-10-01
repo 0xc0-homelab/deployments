@@ -1,0 +1,69 @@
+# The collectors that feed OpenObserve (openobserve), run by the OpenTelemetry
+# Operator (opentelemetry-operator):
+# - agent, one per node: every container's logs, and the node's and the pods'
+#   metrics (kubelet, host);
+# - gateway, one replica: traces over OTLP from whatever sends them (Traefik,
+#   ArgoCD), Kubernetes events, and every Prometheus target, from the cluster's
+#   ServiceMonitors through the target allocator, plus the control plane and
+#   kube-state-metrics (in kube-system).
+#
+# Backups: no volumes. A lost collector loses only what it had not sent yet.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: openobserve-collector
+helmCharts:
+  - name: openobserve-collector
+    repo: https://charts.openobserve.ai
+    version: 0.5.0
+    releaseName: openobserve-collector
+    namespace: openobserve-collector
+    kubeVersion: "1.36.4"
+    includeCRDs: true
+    valuesFile: values.yaml
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - vault-secrets.yaml
+patches:
+  # The chart takes the exporters' Authorization as a literal only: both
+  # collectors get O2_AUTH from Vault's Secret instead, and the header reads it
+  # (values.yaml).
+  - target:
+      kind: OpenTelemetryCollector
+    patch: |-
+      - op: add
+        path: /spec/env/-
+        value:
+          name: O2_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: openobserve-auth-vault
+              key: O2_AUTH
+  # etcd's metrics, which the chart does not scrape: plain HTTP on each
+  # server's address, 2381 (etcd-expose-metrics, in infrastructure's rke2_server
+  # role).
+  - target:
+      kind: OpenTelemetryCollector
+      name: openobserve-collector-gateway
+    patch: |-
+      - op: add
+        path: /spec/config/receivers/prometheus/config/scrape_configs/-
+        value:
+          job_name: etcd
+          scrape_interval: 30s
+          scrape_timeout: 10s
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names: [kube-system]
+          relabel_configs:
+            - source_labels: [__meta_kubernetes_pod_label_component]
+              action: keep
+              regex: etcd
+            - source_labels: [__address__]
+              action: replace
+              regex: "([^:]+)(?::\\d+)?"
+              replacement: "$1:2381"
+              target_label: __address__
+            - source_labels: [__meta_kubernetes_pod_node_name]
+              target_label: node

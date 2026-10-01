@@ -33,3 +33,8 @@ defaultAuthMethod:
 hooks:
   upgradeCRDs:
     enabled: false
+# The controller's metrics, behind kube-rbac-proxy (8443, HTTPS): the
+# collector scrapes them with its own service account token.
+telemetry:
+  serviceMonitor:
+    enabled: true

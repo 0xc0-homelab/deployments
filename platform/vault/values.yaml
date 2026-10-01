@@ -50,10 +50,23 @@ server:
         ui = true
         disable_mlock = true
 
+        # Prometheus metrics at /v1/sys/metrics for OpenObserve's collector
+        # (the ServiceMonitor below). Unauthenticated, as it cannot hold a
+        # Vault token. It shares the API's port, so whoever may reach 8200
+        # (Traefik's WARP-only route included) can read it too.
+        telemetry {
+          prometheus_retention_time = "30s"
+          disable_hostname          = true
+        }
+
         listener "tcp" {
           tls_disable     = 1
           address         = "[::]:8200"
           cluster_address = "[::]:8201"
+
+          telemetry {
+            unauthenticated_metrics_access = true
+          }
         }
 
         storage "raft" {
@@ -74,3 +87,8 @@ server:
     disruptionBudget:
       enabled: true
       maxUnavailable: 1
+# The ServiceMonitor, on the active server's Service (vault-active) over
+# plain HTTP, for OpenObserve's collector.
+serverTelemetry:
+  serviceMonitor:
+    enabled: true

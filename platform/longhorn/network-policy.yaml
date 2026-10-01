@@ -3,7 +3,8 @@
 # instance managers, the webhooks and the backing-image pods need; policies
 # add up, so they keep working. This closes the rest: the UI, the CSI plugin
 # and its sidecars, the global manager, the driver deployer, the engine image
-# and share-manager. Kubelet's probes come from the pod's own node, which a
+# and share-manager. The manager's metrics (9500) are open to OpenObserve's
+# collector here too: the chart's manager policy does not list it. Kubelet's probes come from the pod's own node, which a
 # NetworkPolicy always allows.
 #
 # RWX volumes (share-manager's NFS, 2049) need an explicit allow the day one is
@@ -41,3 +42,28 @@ spec:
       ports:
         - protocol: TCP
           port: 8000
+---
+# The manager's metrics, scraped by OpenObserve's collector only. Adds to the
+# chart's longhorn-manager policy, which stays as it is.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metrics-from-collector
+  namespace: longhorn-system
+spec:
+  podSelector:
+    matchLabels:
+      app: longhorn-manager
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve-collector
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+      ports:
+        - protocol: TCP
+          port: 9500

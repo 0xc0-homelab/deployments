@@ -1,5 +1,5 @@
-# CrowdSec's pods deny ingress but what they are for. Its metrics (6060) stay
-# closed; kubelet's probes come from the pod's own node, always allowed.
+# CrowdSec's pods deny ingress but what they are for. Its metrics (6060) are
+# open to OpenObserve's collector only; kubelet's probes come from the pod's own node, always allowed.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -63,3 +63,28 @@ spec:
       ports:
         - protocol: TCP
           port: 7422
+---
+# The LAPI's, the agents' and AppSec's metrics, scraped by OpenObserve's
+# collector only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: metrics-from-collector
+  namespace: crowdsec
+spec:
+  podSelector:
+    matchLabels:
+      k8s-app: crowdsec
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve-collector
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+      ports:
+        - protocol: TCP
+          port: 6060

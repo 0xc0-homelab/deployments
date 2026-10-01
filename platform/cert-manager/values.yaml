@@ -21,3 +21,9 @@ startupapicheck:
 # TXT record must be visible from outside before Let's Encrypt is asked.
 dns01RecursiveNameservers: "1.1.1.1:53,1.0.0.1:53"
 dns01RecursiveNameserversOnly: true
+# Metrics (9402) for OpenObserve's collector: the controller's and the
+# webhook's.
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
