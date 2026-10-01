@@ -20,10 +20,14 @@ config:
   # Bounded caches, so it stays inside its memory limit. In MB.
   ZO_MEMORY_CACHE_MAX_SIZE: "256"
   ZO_MEMORY_CACHE_DATAFUSION_MAX_SIZE: "256"
-  # Ingestion: room for what arrives before it reaches the disk, which it does
-  # every 2 minutes instead of 10. With its automatic size the memtable
-  # overflowed on a thousand metric streams, and every write got a 503.
+  # Ingestion. A memtable rotates for the disk at ZO_MAX_FILE_SIZE_IN_MEMORY
+  # (512 by default) or after ZO_MAX_FILE_RETENTION_TIME, and all of them
+  # together are capped at ZO_MEM_TABLE_MAX_SIZE, past which every write gets
+  # a 503 (MemoryTableOverflowError). With the rotation size as large as the
+  # cap, the active memtable filled it before it ever rotated: rotate at 64,
+  # well under it.
   ZO_MEM_TABLE_MAX_SIZE: "512"
+  ZO_MAX_FILE_SIZE_IN_MEMORY: "64"
   ZO_MAX_FILE_RETENTION_TIME: "120"
 
 persistence:
