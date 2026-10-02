@@ -74,6 +74,47 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+      # The official 7.2 image lacks GrapesJS's compiled assets
+      # (mautic/docker-mautic#479), so the email builder never loads. The
+      # release ZIP of the same version has them: this downloads it, checks
+      # it against its pinned sha256, and keeps only the assets, for web.
+      # Remove it with the first image that ships them (gitops#87); until
+      # then, a bump of the image bumps the version and sha256 here too.
+      initContainers:
+        - name: grapesjs-assets
+          image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
+          command:
+            - bash
+            - -euo
+            - pipefail
+            - -c
+            - |
+              curl -fsSL -o /download/mautic.zip \
+                "https://github.com/mautic/mautic/releases/download/${MAUTIC_VERSION}/${MAUTIC_VERSION}.zip"
+              echo "${MAUTIC_ZIP_SHA256}  /download/mautic.zip" | sha256sum -c -
+              unzip -q -o -j /download/mautic.zip \
+                'plugins/GrapesJsBuilderBundle/Assets/library/js/dist/*' -d /dist
+              rm /download/mautic.zip
+              ls -l /dist
+          env:
+            - name: MAUTIC_VERSION
+              value: "7.2.1"
+            - name: MAUTIC_ZIP_SHA256
+              value: 5c86cf1fe8b4f9818232ce8bb755760f502d47846706e9164d144865d031ecbd
+          securityContext:
+            capabilities:
+              drop: [NET_RAW]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: download
+              mountPath: /download
+            - name: grapesjs-assets
+              mountPath: /dist
       containers:
         - name: web
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
@@ -144,6 +185,10 @@ spec:
             # Symfony's cache, its own per container (volumes, below).
             - name: cache-web
               mountPath: /var/www/html/var/cache
+            # GrapesJS's compiled assets (initContainers, above).
+            - name: grapesjs-assets
+              mountPath: /var/www/html/docroot/plugins/GrapesJsBuilderBundle/Assets/library/js/dist
+              readOnly: true
         - name: cron
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
           env:
@@ -229,3 +274,11 @@ spec:
         - name: cache-worker
           emptyDir:
             sizeLimit: 512Mi
+        # The release ZIP, only while the initContainer runs, and the assets
+        # it keeps.
+        - name: download
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: grapesjs-assets
+          emptyDir:
+            sizeLimit: 32Mi
