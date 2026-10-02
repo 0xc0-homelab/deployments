@@ -1,0 +1,19 @@
+# Hand the blocks a volume's filesystem has freed back to Longhorn, which
+# otherwise keeps every block ever written: OpenObserve's volume used 2 GB of
+# its filesystem but held 12 GiB on each of three replicas (2026-10-02), from
+# its WAL and compaction rewriting files. Every volume with no recurring job of
+# its own is in the default group, so this covers them all. No Longhorn
+# snapshots are kept, so nothing pins the freed blocks.
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: filesystem-trim
+  namespace: longhorn-system
+spec:
+  name: filesystem-trim
+  task: filesystem-trim
+  cron: "17 */6 * * *"
+  groups:
+    - default
+  retain: 0
+  concurrency: 1
