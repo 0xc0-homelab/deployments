@@ -20,6 +20,12 @@ resources:
   - vault-secrets.yaml
   - deployment.yaml
   - httproute.yaml
+# Hashed: a change to it is a new name, so a rollout of the pod. Nothing is
+# pruned here, so the old one stays behind; it is a few hundred bytes.
+configMapGenerator:
+  - name: mautic-supervisord
+    files:
+      - supervisord.conf
 # No pruning: it holds data.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false

@@ -1,6 +1,7 @@
 # The three roles of the official image, as containers of one pod: web
 # (apache, which also runs the migrations at its start), cron (segments and
-# campaigns, every 15 minutes) and worker (the messenger queues). One pod, so
+# campaigns, every 15 minutes) and worker (the messenger queues, its
+# consumers restarted every five minutes: supervisord.conf). One pod, so
 # one Longhorn RWO volume serves the three: no RWX, no NFS share-manager.
 # cron and worker wait until Mautic is installed (README.md).
 apiVersion: v1
@@ -85,6 +86,17 @@ spec:
                 secretKeyRef:
                   name: mautic-database-vault
                   key: password
+            # The sending provider, from Vault (vault-secrets.yaml). A real
+            # environment variable wins over local.php, so the DSN set in
+            # Configuration is not used. Optional: without it, Mautic sends
+            # nothing.
+            - &mailer
+              name: MAUTIC_MAILER_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: mautic-mailer-vault
+                  key: dsn
+                  optional: true
           envFrom: &env
             - configMapRef:
                 name: mautic-env
@@ -135,6 +147,7 @@ spec:
             - name: DOCKER_MAUTIC_ROLE
               value: mautic_cron
             - *password
+            - *mailer
           envFrom: *env
           securityContext: *security
           resources:
@@ -150,6 +163,7 @@ spec:
             - name: DOCKER_MAUTIC_ROLE
               value: mautic_worker
             - *password
+            - *mailer
           envFrom: *env
           securityContext: *security
           resources:
@@ -158,8 +172,28 @@ spec:
               memory: 192Mi
             limits:
               memory: 512Mi
-          volumeMounts: *mounts
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html/config
+              subPath: config
+            - name: data
+              mountPath: /var/www/html/var/logs
+              subPath: logs
+            - name: data
+              mountPath: /var/www/html/docroot/media/files
+              subPath: media/files
+            - name: data
+              mountPath: /var/www/html/docroot/media/images
+              subPath: media/images
+            # Its consumers restart every five minutes (supervisord.conf).
+            - name: supervisord
+              mountPath: /etc/supervisor/conf.d/supervisord.conf
+              subPath: supervisord.conf
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: mautic-data
+        - name: supervisord
+          configMap:
+            name: mautic-supervisord
