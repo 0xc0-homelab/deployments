@@ -1,0 +1,11 @@
+# One replica stays up through a drain.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: offby1-cc
+  namespace: offby1-cc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: offby1-cc

@@ -1,0 +1,16 @@
+# offby1.cc, the landing page of offby1 (0xc0-homelab/offby1.cc#1): the
+# app's own Next.js server, two replicas of the image CI publishes from
+# 0xc0-homelab/offby1.cc. Public at https://offby1.cc; www.offby1.cc
+# redirects there (httproute.yaml). No secrets yet: the contact form does
+# not deliver, so nothing reads Vault.
+#
+# Backups: none. It holds no data; the image is its whole state.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: offby1-cc
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - deployment.yaml
+  - pdb.yaml
+  - httproute.yaml
