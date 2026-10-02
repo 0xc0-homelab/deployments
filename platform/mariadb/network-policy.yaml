@@ -1,6 +1,6 @@
 # MariaDB accepts connections and initiates none (CLAUDE.md, Hard rules): its
-# port (3306) takes the dumps CronJob, and each application's namespace once
-# it arrives, named here. kubelet's probes run in the pod, always allowed.
+# port (3306) takes the dumps CronJob, the databases Job, and each
+# application's namespace, named here. kubelet's probes run in the pod, always allowed.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -28,6 +28,15 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: mariadb-dumps
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mariadb-databases
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: mautic
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mautic
       ports:
         - protocol: TCP
           port: 3306

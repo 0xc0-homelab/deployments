@@ -1,0 +1,12 @@
+# Pod Security baseline, not restricted: the official image starts as root
+# (it chowns its volumes, then apache, cron and supervisord drop to
+# www-data). Its routes attach to the public 0xc0.cc listener and to the
+# internal one (httproute.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mautic
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    gateway.0xc0.cc/web: "true"
+    gateway.0xc0.cc/internal: "true"

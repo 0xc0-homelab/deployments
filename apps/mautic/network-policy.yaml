@@ -1,0 +1,35 @@
+# Mautic denies ingress but its HTTP port (80), from Traefik, on both paths.
+# Egress stays open: MariaDB, the sending provider once there is one, and
+# MaxMind's lookups.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: mautic
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: http-from-traefik
+  namespace: mautic
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mautic
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 80

@@ -19,6 +19,7 @@ resources:
   - vault-secrets.yaml
   - statefulset.yaml
   - dumps.yaml
+  - databases.yaml
 configMapGenerator:
   - name: mariadb-config
     files:
