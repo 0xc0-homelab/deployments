@@ -50,7 +50,7 @@ patches:
         path: /spec/config/receivers/prometheus/config/scrape_configs/-
         value:
           job_name: etcd
-          scrape_interval: 30s
+          scrape_interval: 60s
           scrape_timeout: 10s
           kubernetes_sd_configs:
             - role: pod
@@ -67,3 +67,34 @@ patches:
               target_label: __address__
             - source_labels: [__meta_kubernetes_pod_node_name]
               target_label: node
+  # Every scrape once a minute (values.yaml): the chart's jobs set 30 s each,
+  # and the target allocator's default, for a ServiceMonitor that names none,
+  # is 30 s too.
+  - target:
+      kind: OpenTelemetryCollector
+      name: openobserve-collector-gateway
+    patch: |-
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/0/scrape_interval
+        value: 60s
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/1/scrape_interval
+        value: 60s
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/2/scrape_interval
+        value: 60s
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/3/scrape_interval
+        value: 60s
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/4/scrape_interval
+        value: 60s
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/5/scrape_interval
+        value: 60s
+      - op: replace
+        path: /spec/config/receivers/prometheus/config/scrape_configs/6/scrape_interval
+        value: 60s
+      - op: add
+        path: /spec/targetAllocator/prometheusCR/scrapeInterval
+        value: 60s
