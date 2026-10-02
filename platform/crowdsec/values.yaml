@@ -8,6 +8,14 @@ image:
 # One agent per node, reading Traefik's access logs (JSON) for behaviour:
 # scans, brute force, known-bad bots.
 agent:
+  # Rocky's SELinux keeps a container's default domain (container_t) out of
+  # /var/log/containers and /var/log/pods (container_log_t): the agents read
+  # nothing. container_logreader_t, from container-selinux, is the domain for
+  # a container that reads container logs, and nothing more: narrower than
+  # the privileged spc_t OpenObserve's collector needs for the node's metrics.
+  podSecurityContext:
+    seLinuxOptions:
+      type: container_logreader_t
   # Metrics (6060) for OpenObserve's collector.
   metrics:
     serviceMonitor:
