@@ -5,39 +5,41 @@ Metrics, logs and traces of the cluster in one backend, at
 volume, 30 days of retention. The collectors in `openobserve-collector` send to
 it; what they collect is in their `kustomization.yaml`.
 
-## Before the first sync: the root user
+## Credentials: the root user and the collectors' service account
 
-OpenObserve reads its root user from Vault, `platform/shared/openobserve-root`,
-which the collectors use too. The operator writes it once, over WARP, with the
-password generated straight into stdin (the `vault` repo, README, "Writing or
-rotating a secret"):
+Two, both from Vault through Vault Secrets Operator (the `vault` repo, README,
+"Secrets: the standard"):
+
+| What | Vault | Read by |
+|---|---|---|
+| The root user, the operator's login | `platform/openobserve/root` (`email`, `password`) | OpenObserve, which creates the root from it on its first start |
+| The collectors' service account | `platform/openobserve-collector/ingest` (`email`, `token`) | the collectors, as basic auth |
+
+**The root user.** OpenObserve creates it from the environment once, on its
+first start, and never updates it from there (seen on the first sync,
+2026-10-01). Changing its password is therefore two steps, in this order:
+first in OpenObserve (the UI, user settings), then the same value in Vault
+with `kv patch`. Changing its email means recreating the volume. To log in,
+read the password when needed:
+`vault kv get -mount=platform -field=password openobserve/root`.
+
+**The service account** is made in OpenObserve (IAM, then Service accounts),
+and OpenObserve generates its token. Its token goes to Vault with `read -rs`,
+never on the command line:
 
 ```sh
 export VAULT_ADDR=https://vault.int.0xc0.cc
 mise exec -- vault login -no-print
-mise exec -- vault kv put -mount=platform shared/openobserve-root email=<your email>
-# key=- stores stdin as it is: strip openssl's trailing newline, or it becomes
-# part of the password.
-openssl rand -base64 24 | tr -d '\n' | mise exec -- vault kv patch -mount=platform shared/openobserve-root password=-
+read -rs t && printf '%s' "$t" | mise exec -- vault kv put -mount=platform openobserve-collector/ingest email=collector@0xc0.cc token=- ; unset t
 mise exec -- vault kv metadata put -mount=platform \
-  -custom-metadata=owner=operator -custom-metadata=rotated_at="$(date +%F)" shared/openobserve-root
+  -custom-metadata=owner=operator -custom-metadata=rotated_at="$(date +%F)" openobserve-collector/ingest
 rm -f ~/.vault-token
 ```
 
-To log in, read the password when needed:
-`vault kv get -mount=platform -field=password shared/openobserve-root`.
-
-OpenObserve creates its root user from the environment once, on its first
-start, and never updates it from there (seen on the first sync, 2026-10-01).
-Rotating the password is therefore two steps, in this order:
-
-1. Change it in OpenObserve (the UI, user settings, or its users API), to the
-   new value.
-2. Write the same value to Vault with `kv patch`. Vault Secrets Operator
-   rewrites both Secrets within the hour and restarts OpenObserve and the
-   collectors, which then send with it.
-
-Between the two, the collectors are refused (401) and buffer what they can.
+Rotating it is a new token in OpenObserve, the same `kv put`, then the old
+token revoked there. Vault Secrets Operator rewrites the collectors' Secret
+within the hour and restarts them. Changing the root user's password does not
+touch ingestion.
 
 ## Dashboards: from git
 
