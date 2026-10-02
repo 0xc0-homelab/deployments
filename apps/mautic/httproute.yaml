@@ -2,13 +2,30 @@
 # reach (the tracking pixel and scripts, forms, landing pages under any slug,
 # the links and unsubscribe pages of its emails, the sending provider's
 # callback), behind CrowdSec on websecure. Landing pages take any path, so the
-# public side cannot be an allowlist: everything a person uses redirects to
-# https://mautic.int.0xc0.cc, WARP only. That is Mautic 7.2's own non-public
-# firewall (/s, /elfinder, /efconnect, /api), plus the user flows outside it
-# (password reset, invites, SAML, OAuth), the integrations' auth callbacks,
-# and the installer. /index.php reaches every route again, so it redirects
-# whole. Its links go out with the public name, its site_url (README.md).
-# Checked against the routes of 7.2.1: recheck them on a major upgrade.
+# public side cannot be an allowlist: everything a person uses is refused
+# there with a 403 (gitops#78), and is reached only at
+# https://mautic.int.0xc0.cc, WARP only, with no hint of that name. That is
+# Mautic 7.2's own non-public firewall (/s, /elfinder, /efconnect, /api), plus
+# the user flows outside it (password reset, invites, SAML, OAuth), the
+# integrations' auth callbacks, and the installer. /index.php reaches every
+# route again, so it is refused whole, and so is the root, which Mautic sends
+# to its dashboard. Its links go out with the public name, its site_url
+# (README.md). Checked against the routes of 7.2.1: recheck them on a major
+# upgrade. A password reset or invite email for an admin user carries the
+# public name too: open it with mautic.int.0xc0.cc instead.
+#
+# Gateway API has no filter that refuses a request, so Traefik's own
+# middleware does: an allow list only Traefik's own loopback would match, and
+# every request reaches it from the load balancers.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: refuse
+  namespace: mautic
+spec:
+  ipAllowList:
+    sourceRange: [127.0.0.1/32]
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -38,15 +55,18 @@ spec:
         - path: {type: PathPrefix, value: /plugins}
         - path: {type: PathPrefix, value: /integration}
         - path: {type: PathPrefix, value: /index.php}
+        # Until a landing page is Mautic's root URL.
+        - path: {type: Exact, value: /}
       filters:
-        - type: RequestRedirect
-          requestRedirect:
-            # The scheme and port written out: left empty, the redirect
-            # would carry the listener's port, 8443.
-            scheme: https
-            hostname: mautic.int.0xc0.cc
-            port: 443
-            statusCode: 302
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: refuse
+      # Never reached: the middleware answers first.
+      backendRefs:
+        - name: mautic
+          port: 80
     - backendRefs:
         - name: mautic
           port: 80

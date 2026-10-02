@@ -3,7 +3,8 @@
 # with its three roles as containers of one pod (deployment.yaml). Its
 # database is in the shared MariaDB (platform/mariadb). Public at
 # https://mautic.0xc0.cc for what contacts reach; the admin only at
-# https://mautic.int.0xc0.cc, over WARP (httproute.yaml). Installed once by
+# https://mautic.int.0xc0.cc, over WARP; the public name refuses it
+# (httproute.yaml). Installed once by
 # hand: README.md.
 #
 # Backups:
