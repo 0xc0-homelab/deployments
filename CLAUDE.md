@@ -34,7 +34,7 @@ Operator are in, monitoring comes next.
 One RKE2 cluster, in the `platform` zone, holds everything after phase 1:
 
 - **Shared services**: ArgoCD, Vault, OpenObserve (metrics, logs, traces), data services
-  (Postgres, Redis).
+  (Postgres, MariaDB, Redis).
 - **Applications**.
 
 They are separated by namespace and NetworkPolicy. Traffic enters through the

@@ -1,0 +1,35 @@
+# MariaDB accepts connections and initiates none (CLAUDE.md, Hard rules): its
+# port (3306) takes the dumps CronJob, and each application's namespace once
+# it arrives, named here. kubelet's probes run in the pod, always allowed.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: mariadb
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mariadb-server
+  namespace: mariadb
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mariadb
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: mariadb-dumps
+      ports:
+        - protocol: TCP
+          port: 3306
+  # No egress at all.
+  egress: []
