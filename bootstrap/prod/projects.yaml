@@ -19,3 +19,25 @@ spec:
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
+---
+# The applications (apps/ in this repo): namespaced resources, only in the
+# namespaces listed here, one per application, and no cluster-scoped kind but
+# their own Namespace. So an application cannot write into argocd, a shared
+# service's namespace or another application's. A CRD, a ClusterRole or a
+# StorageClass an application needs goes through platform/. Adding an
+# application is adding its namespace here too.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: apps
+  namespace: argocd
+spec:
+  description: The applications, from apps/ in this repo.
+  sourceRepos:
+    - https://github.com/0xc0-homelab/gitops.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: mautic
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace

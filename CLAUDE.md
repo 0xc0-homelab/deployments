@@ -15,9 +15,12 @@ What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
   Argo CD puts there what a chart leaves without one, because Kustomize's
   `namespace` field does not reach what `helmCharts` inflates. A component holding data or CRDs sets `Prune=false` through
   `commonAnnotations`.
+- `apps/<application>/` — the applications, the same pattern under the
+  `apps` ApplicationSet and its narrower `AppProject`: namespaced resources
+  only, and their own Namespace. Mautic came ahead of phase 6 at the
+  operator's request (2026-10-02, #73).
 - ArgoCD itself is installed and upgraded by RKE2's helm-controller, never
-  from here. The applications of phase 6 get `apps/`, the same pattern under
-  their own `AppProject`.
+  from here.
 
 Operator decision, 2026-09-29 (#16): an ApplicationSet over Kustomize
 components, instead of hand-written `Application`s with inline values.

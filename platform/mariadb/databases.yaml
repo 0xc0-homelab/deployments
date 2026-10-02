@@ -1,0 +1,109 @@
+# Each application's database and user, from its password in Vault: one
+# directory per application under /databases, named after its database and
+# user, holding its password. After every sync (a PostSync hook), idempotent:
+# it creates what is missing and sets each user's password to Vault's, so a
+# rotation is a write to Vault and a sync of this Application.
+#
+# Adding an application: its VaultStaticSecret here (its policy in the vault
+# repo grants mariadb its path, by name), a volume and mount below, and its
+# namespace in network-policy.yaml.
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: mautic-database
+  namespace: mariadb
+spec:
+  vaultAuthRef: vault-secrets
+  type: kv-v2
+  mount: apps
+  path: mautic/database
+  refreshAfter: 1h
+  destination:
+    name: mautic-database-vault
+    create: true
+    transformation:
+      excludeRaw: true
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mariadb-databases
+  namespace: mariadb
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mariadb-databases
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: databases
+          image: docker.io/library/mariadb:11.8.9@sha256:6422478cb8e159f080fb1d8ccf65101e26fe51385787fde7d16c3b165a331f15
+          command:
+            - bash
+            - -euo
+            - pipefail
+            - -c
+            - |
+              until mariadb-admin -h mariadb -u root --silent ping; do
+                echo "waiting for mariadb"; sleep 5
+              done
+              for dir in /databases/*/; do
+                name=$(basename "$dir")
+                pw=$(cat "$dir/password")
+                # Escaped for a quoted SQL string. The value goes in on stdin,
+                # never on a command line.
+                pw=${pw//\\/\\\\}
+                pw=${pw//\'/\\\'}
+                mariadb -h mariadb -u root <<SQL
+              CREATE DATABASE IF NOT EXISTS \`$name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+              CREATE USER IF NOT EXISTS '$name'@'%' IDENTIFIED BY '$pw';
+              ALTER USER '$name'@'%' IDENTIFIED BY '$pw';
+              GRANT ALL PRIVILEGES ON \`$name\`.* TO '$name'@'%';
+              SQL
+                echo "database $name ready"
+              done
+          env:
+            - name: MYSQL_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: mariadb-root-vault
+                  key: password
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: mautic
+              mountPath: /databases/mautic
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: mautic
+          secret:
+            secretName: mautic-database-vault
+            items:
+              - key: password
+                path: password
+        - name: tmp
+          emptyDir: {}

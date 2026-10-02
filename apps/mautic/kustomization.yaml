@@ -1,0 +1,24 @@
+# Mautic, marketing automation, ahead of phase 6 at the operator's request
+# (operator decision, 2026-10-02; gitops#73). One instance, the official image
+# with its three roles as containers of one pod (deployment.yaml). Its
+# database is in the shared MariaDB (platform/mariadb). Public at
+# https://mautic.0xc0.cc for what contacts reach; the admin only at
+# https://mautic.int.0xc0.cc, over WARP (httproute.yaml). Installed once by
+# hand: README.md.
+#
+# Backups:
+# - mautic-data (Longhorn, 5Gi): local.php, logs and uploaded media, covered
+#   by PBS's nightly backup of the RKE2 VMs (03:00).
+# - Its database: platform/mariadb's nightly dump, mariadb-dumps/mautic.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: mautic
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - vault-secrets.yaml
+  - deployment.yaml
+  - httproute.yaml
+# No pruning: it holds data.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

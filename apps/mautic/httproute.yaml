@@ -1,0 +1,69 @@
+# Two names, one backend. https://mautic.0xc0.cc is public: what contacts
+# reach (the tracking pixel and scripts, forms, landing pages under any slug,
+# the links and unsubscribe pages of its emails, the sending provider's
+# callback), behind CrowdSec on websecure. Landing pages take any path, so the
+# public side cannot be an allowlist: everything a person uses redirects to
+# https://mautic.int.0xc0.cc, WARP only. That is Mautic 7.2's own non-public
+# firewall (/s, /elfinder, /efconnect, /api), plus the user flows outside it
+# (password reset, invites, SAML, OAuth), the integrations' auth callbacks,
+# and the installer. /index.php reaches every route again, so it redirects
+# whole. Its links go out with the public name, its site_url (README.md).
+# Checked against the routes of 7.2.1: recheck them on a major upgrade.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mautic
+  namespace: mautic
+  annotations:
+    gateway.0xc0.cc/public: "true"
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+      sectionName: websecure-0xc0-cc
+  hostnames:
+    - mautic.0xc0.cc
+  rules:
+    - matches:
+        - path: {type: PathPrefix, value: /s}
+        - path: {type: PathPrefix, value: /elfinder}
+        - path: {type: PathPrefix, value: /efconnect}
+        - path: {type: PathPrefix, value: /installer}
+        - path: {type: PathPrefix, value: /api}
+        - path: {type: PathPrefix, value: /oauth}
+        - path: {type: PathPrefix, value: /passwordreset}
+        - path: {type: PathPrefix, value: /passwordresetconfirm}
+        - path: {type: PathPrefix, value: /invite}
+        - path: {type: PathPrefix, value: /saml}
+        - path: {type: PathPrefix, value: /plugins}
+        - path: {type: PathPrefix, value: /integration}
+        - path: {type: PathPrefix, value: /index.php}
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            # The scheme and port written out: left empty, the redirect
+            # would carry the listener's port, 8443.
+            scheme: https
+            hostname: mautic.int.0xc0.cc
+            port: 443
+            statusCode: 302
+    - backendRefs:
+        - name: mautic
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: mautic-admin
+  namespace: mautic
+spec:
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+      sectionName: internal
+  hostnames:
+    - mautic.int.0xc0.cc
+  rules:
+    - backendRefs:
+        - name: mautic
+          port: 80
