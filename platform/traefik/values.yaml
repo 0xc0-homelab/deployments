@@ -125,10 +125,12 @@ ports:
     forwardedHeaders:
       trustedIPs: [10.10.4.11/32, 10.10.4.12/32]
     # Every request on the entrypoint goes through CrowdSec's bouncer first
-    # (crowdsec-bouncer.yaml).
+    # (crowdsec-bouncer.yaml), and every response gets the baseline security
+    # headers (security-headers.yaml).
     http:
       middlewares:
         - traefik-crowdsec-bouncer@kubernetescrd
+        - traefik-security-headers@kubernetescrd
   # The WARP-only path: HAProxy sends the internal VIP's 443 here, and the
   # public tunnel never does. No forwarded headers to trust (WARP sets none)
   # and no bouncer (no public client to filter).
@@ -142,6 +144,10 @@ ports:
     http:
       tls:
         enabled: true
+      # The same baseline security headers as websecure
+      # (security-headers.yaml).
+      middlewares:
+        - traefik-security-headers@kubernetescrd
 # What CrowdSec reads.
 accessLog:
   enabled: true

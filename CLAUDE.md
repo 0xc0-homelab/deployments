@@ -79,6 +79,12 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
 - **The WAF lives at the ingress**: CrowdSec's bouncer on Traefik's
   entrypoint. Do not duplicate it in a service. Behind Cloudflare, the client
   is `CF-Connecting-IP`, trusted only from `platform`.
+- **Security headers in two layers** (#95). Traefik sets the baseline on
+  every entrypoint (`platform/traefik/security-headers.yaml`: HSTS with
+  subdomains, nosniff, Referrer-Policy); an application never repeats it.
+  What depends on the application (framing, Permissions-Policy, COOP/CORP)
+  goes in a headers Middleware on its own route, and the CSP comes from the
+  application itself.
 - **Every namespace denies by default** and opens only what it needs, with
   NetworkPolicies. Data services accept connections and initiate none.
 - **Every persistent volume declares its backup** in a comment: destination

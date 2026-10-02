@@ -19,5 +19,6 @@ resources:
   - network-policy.yaml
   - vault-secrets.yaml
   - crowdsec-bouncer.yaml
+  - security-headers.yaml
   - certificates.yaml
   - dashboard.yaml

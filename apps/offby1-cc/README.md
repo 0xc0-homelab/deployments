@@ -16,6 +16,8 @@ The package on GHCR is public, so the cluster pulls with no secret.
 
 ## Headers
 
-Traefik sets the security headers that are the same everywhere
-(`security-headers` in `httproute.yaml`); the app sets its own
+Traefik sets the baseline on every entrypoint
+(`platform/traefik/security-headers.yaml`: HSTS, nosniff, Referrer-Policy)
+and this route adds its own (`security-headers` in `httproute.yaml`: no
+framing, Permissions-Policy, COOP/CORP). The app sets its own
 Content-Security-Policy, with a nonce per request.

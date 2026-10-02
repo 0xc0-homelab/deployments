@@ -2,11 +2,12 @@
 # publishes both names (the public annotation). www.offby1.cc only redirects
 # to the apex.
 #
-# The security headers that are the same for every response are set here, by
-# Traefik (operator decision, 2026-10-02). The app sets only its
+# The baseline security headers (HSTS, nosniff, Referrer-Policy) are
+# Traefik's, on every entrypoint (platform/traefik/security-headers.yaml).
+# This Middleware adds what is this application's: no framing, no browser
+# features, and isolation from other origins. The app sets its own
 # Content-Security-Policy, whose nonce changes per request
-# (0xc0-homelab/offby1.cc: src/proxy.ts). HSTS covers the subdomains, which
-# are only ever served over HTTPS here; no preload, which is hard to undo.
+# (0xc0-homelab/offby1.cc: src/proxy.ts).
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -14,11 +15,7 @@ metadata:
   namespace: offby1-cc
 spec:
   headers:
-    stsSeconds: 31536000
-    stsIncludeSubdomains: true
-    contentTypeNosniff: true
     frameDeny: true
-    referrerPolicy: strict-origin-when-cross-origin
     permissionsPolicy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
     customResponseHeaders:
       Cross-Origin-Opener-Policy: same-origin
