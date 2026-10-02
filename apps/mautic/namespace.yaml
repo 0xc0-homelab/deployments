@@ -10,3 +10,6 @@ metadata:
     pod-security.kubernetes.io/enforce: baseline
     gateway.0xc0.cc/web: "true"
     gateway.0xc0.cc/internal: "true"
+    # Logs in to Vault through the apps role, which reads apps/mautic/*
+    # (vault-secrets.yaml).
+    vault.0xc0.cc/apps: "true"
