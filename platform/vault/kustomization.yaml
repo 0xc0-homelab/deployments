@@ -28,6 +28,7 @@ resources:
   - namespace.yaml
   - network-policy.yaml
   - httproute.yaml
+  - namespace-reader.yaml
 # No pruning: it holds the secrets.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false
