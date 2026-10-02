@@ -24,7 +24,7 @@ gateway:
   # external-dns (platform/external-dns) points a public route's name at the
   # public tunnel (infrastructure: tofu output public_tunnel_id).
   annotations:
-    external-dns.alpha.kubernetes.io/target: 2bca7b27-f56a-4d12-bb93-079837015367.cfargotunnel.com
+    external-dns.kubernetes.io/target: 2bca7b27-f56a-4d12-bb93-079837015367.cfargotunnel.com
   # One HTTPS listener per name pattern, each with its domain's wildcard
   # (certificates.yaml). A namespace opts in to attach routes with the label
   # gateway.0xc0.cc/web: "true"; no other can claim a hostname. web only
