@@ -128,7 +128,7 @@ spec:
               memory: 384Mi
             limits:
               memory: 1Gi
-          volumeMounts: &mounts
+          volumeMounts:
             - name: data
               mountPath: /var/www/html/config
               subPath: config
@@ -141,6 +141,9 @@ spec:
             - name: data
               mountPath: /var/www/html/docroot/media/images
               subPath: media/images
+            # Symfony's cache, its own per container (volumes, below).
+            - name: cache-web
+              mountPath: /var/www/html/var/cache
         - name: cron
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
           env:
@@ -156,7 +159,21 @@ spec:
               memory: 128Mi
             limits:
               memory: 512Mi
-          volumeMounts: *mounts
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html/config
+              subPath: config
+            - name: data
+              mountPath: /var/www/html/var/logs
+              subPath: logs
+            - name: data
+              mountPath: /var/www/html/docroot/media/files
+              subPath: media/files
+            - name: data
+              mountPath: /var/www/html/docroot/media/images
+              subPath: media/images
+            - name: cache-cron
+              mountPath: /var/www/html/var/cache
         - name: worker
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
           env:
@@ -185,6 +202,8 @@ spec:
             - name: data
               mountPath: /var/www/html/docroot/media/images
               subPath: media/images
+            - name: cache-worker
+              mountPath: /var/www/html/var/cache
             # Its consumers restart every five minutes (supervisord.conf).
             - name: supervisord
               mountPath: /etc/supervisor/conf.d/supervisord.conf
@@ -197,3 +216,16 @@ spec:
         - name: supervisord
           configMap:
             name: mautic-supervisord
+        # Symfony's cache, outside the image: the image ships one built
+        # before any plugin was enabled, in a layer cache:clear cannot
+        # rename on overlayfs (gitops#85). Built anew at every start, one
+        # per container, so no two warm it at once.
+        - name: cache-web
+          emptyDir:
+            sizeLimit: 512Mi
+        - name: cache-cron
+          emptyDir:
+            sizeLimit: 512Mi
+        - name: cache-worker
+          emptyDir:
+            sizeLimit: 512Mi
