@@ -4,6 +4,9 @@ image:
   tag: "v0.22.0@sha256:5fdcaf7deb5c158f93a1fc6fe169cdff4cfb9ae0172bee1a90ab0ef74fb9c9cf"
 provider:
   name: cloudflare
+# Debug while the first public route gets no record (gitops#75): it logs why
+# each route or zone is skipped. Back to info once it is found.
+logLevel: debug
 # The token comes from Vault (platform/shared/cloudflare), through Vault
 # Secrets Operator (vault-secrets.yaml).
 env:
