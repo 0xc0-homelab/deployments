@@ -1,0 +1,10 @@
+# Sized for a small shared server: a few applications, little traffic.
+[mariadbd]
+character-set-server = utf8mb4
+collation-server     = utf8mb4_unicode_ci
+# Clients are pods, by IP: no reverse lookups.
+skip-name-resolve
+innodb_buffer_pool_size = 256M
+max_connections         = 100
+# Its instrumentation costs memory nobody reads.
+performance_schema = OFF
