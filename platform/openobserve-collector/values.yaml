@@ -50,6 +50,14 @@ agent:
       memory: 128Mi
     limits:
       memory: 512Mi
+  # Every minute, not every 30 s: half the metrics, nothing lost at this
+  # scale. The gateway's jobs and the ServiceMonitors follow
+  # (kustomization.yaml, each component's values).
+  receivers:
+    kubeletstats:
+      collection_interval: 60s
+    hostmetrics:
+      collection_interval: 60s
   # Every log's level, from its body: each component writes it its own way,
   # and the container runtime's format carries none. Tried in order, the first
   # match wins: JSON ("level":"info", VSO, etcd), logfmt (level=info: ArgoCD,
@@ -149,6 +157,17 @@ gateway:
           - IsMatch(name, "^(workqueue|rest_client)_")
           - IsMatch(name, "^longhorn_(rest_client|workqueue)_")
           - IsMatch(name, "^vault_(route|rollback|runtime|raft_storage_bolt)_")
+          # Per-target scrape statistics the receiver makes up, the
+          # scheduler's per-plugin histograms, and the process_* of every
+          # component but its memory and CPU.
+          - IsMatch(name, "^scrape_")
+          - IsMatch(name, "^scheduler_plugin_")
+          - IsMatch(name, "^process_") and not IsMatch(name, "^process_(resident_memory_bytes|cpu_seconds_total)$")
+          # Keep-lists for the three that report most about themselves: what
+          # the dashboards use, and a little more worth having at hand.
+          - IsMatch(name, "^vault_") and not IsMatch(name, "^vault_(core_(unsealed|active|handle_request|leadership_lost|check_token)|raft_(peers|committime|leader_lastcontact|apply|state_)|autopilot_|expire_num_leases|barrier_(get|put)|token_count|secret_kv_count)")
+          - IsMatch(name, "^zo_") and not IsMatch(name, "^zo_(ingest_(records|bytes|memtable_bytes|wal_used_bytes)|http_(incoming_requests|response_time)|storage_(write|read)_bytes|query_(running|pending)_nums|node_(disk|memory|cpu)_usage)")
+          - IsMatch(name, "^otelcol_") and not IsMatch(name, "^otelcol_(exporter_(sent|send_failed|queue_size|queue_capacity)|receiver_(accepted|refused|failed)|processor_(incoming|outgoing|dropped))")
     # The API server's latency histogram, by verb only: by resource and scope
     # it was millions of rows an hour, for a p99 by verb.
     transform/aggregate:

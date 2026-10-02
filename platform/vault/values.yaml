@@ -92,3 +92,5 @@ server:
 serverTelemetry:
   serviceMonitor:
     enabled: true
+    # Once a minute, like the rest (openobserve-collector).
+    interval: 60s
