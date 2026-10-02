@@ -19,9 +19,11 @@ sources:
 # public tunnel.
 annotationFilter: gateway.0xc0.cc/public=true
 # Only the zones in the tunnel's own account: a CNAME to it from another
-# account's zone (offby1.cc) fails at the edge with 1014.
+# account's zone fails at the edge with 1014. Both are there; they match
+# infrastructure's public_domains.
 domainFilters:
   - 0xc0.cc
+  - offby1.cc
 # The WARP-only path's names never get a public record, whatever a route says.
 excludeDomains:
   - int.0xc0.cc

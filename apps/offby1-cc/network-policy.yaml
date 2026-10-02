@@ -1,0 +1,36 @@
+# The landing page denies everything but its HTTP port (3000), from Traefik.
+# No egress at all: it calls nothing, not even DNS. The contact form's
+# delivery opens what it needs, when it comes.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: offby1-cc
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: http-from-traefik
+  namespace: offby1-cc
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: offby1-cc
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: traefik
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 3000

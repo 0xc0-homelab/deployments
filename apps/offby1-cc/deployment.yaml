@@ -1,0 +1,101 @@
+# The landing page's Node server. The image is pinned by digest: each bump is
+# the tag@digest that the container-image job prints in its summary, on the
+# push to main of 0xc0-homelab/offby1.cc (README.md).
+apiVersion: v1
+kind: Service
+metadata:
+  name: offby1-cc
+  namespace: offby1-cc
+spec:
+  selector:
+    app.kubernetes.io/name: offby1-cc
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: offby1-cc
+  namespace: offby1-cc
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: offby1-cc
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: offby1-cc
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      # One replica per node where it can, so a drain or a node down leaves
+      # the other serving.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: offby1-cc
+      containers:
+        - name: web
+          image: ghcr.io/0xc0-homelab/offby1.cc:sha-0000000@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          env:
+            # Next.js binds to $HOSTNAME, which the runtime sets to the pod's
+            # name over the image's own value: bind every address instead.
+            - name: HOSTNAME
+              value: 0.0.0.0
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /healthz/
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz/
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            # Next.js's cache, the only path it writes.
+            - name: cache
+              mountPath: /app/.next/cache
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: cache
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

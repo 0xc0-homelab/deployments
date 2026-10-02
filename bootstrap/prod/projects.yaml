@@ -38,6 +38,8 @@ spec:
   destinations:
     - server: https://kubernetes.default.svc
       namespace: mautic
+    - server: https://kubernetes.default.svc
+      namespace: offby1-cc
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace

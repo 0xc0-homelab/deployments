@@ -18,7 +18,8 @@ What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
 - `apps/<application>/` — the applications, the same pattern under the
   `apps` ApplicationSet and its narrower `AppProject`: namespaced resources
   only, and their own Namespace. Mautic came ahead of phase 6 at the
-  operator's request (2026-10-02, #73).
+  operator's request (2026-10-02, #73), and so did offby1-cc, the offby1.cc
+  landing page (2026-10-02, 0xc0-homelab/offby1.cc#1).
 - ArgoCD itself is installed and upgraded by RKE2's helm-controller, never
   from here.
 
