@@ -11,8 +11,12 @@
 # route again, so it is refused whole, and so is the root, which Mautic sends
 # to its dashboard. Its links go out with the public name, its site_url
 # (README.md). Checked against the routes of 7.2.1: recheck them on a major
-# upgrade. A password reset or invite email for an admin user carries the
-# public name too: open it with mautic.int.0xc0.cc instead.
+# upgrade.
+#
+# The one exception: the admin-user flows whose links go out by email, with
+# the public name (password reset, invites). Those redirect to the internal
+# name, path and query kept, so the link works for someone on WARP and leads
+# nowhere for anyone else (gitops#83).
 #
 # Gateway API has no filter that refuses a request, so Traefik's own
 # middleware does: an allow list only Traefik's own loopback would match, and
@@ -42,15 +46,24 @@ spec:
     - mautic.0xc0.cc
   rules:
     - matches:
+        - path: {type: PathPrefix, value: /passwordreset}
+        - path: {type: PathPrefix, value: /passwordresetconfirm}
+        - path: {type: PathPrefix, value: /invite}
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            # With the scheme set, the redirect takes its well-known port,
+            # not the listener's 8443.
+            scheme: https
+            hostname: mautic.int.0xc0.cc
+            statusCode: 302
+    - matches:
         - path: {type: PathPrefix, value: /s}
         - path: {type: PathPrefix, value: /elfinder}
         - path: {type: PathPrefix, value: /efconnect}
         - path: {type: PathPrefix, value: /installer}
         - path: {type: PathPrefix, value: /api}
         - path: {type: PathPrefix, value: /oauth}
-        - path: {type: PathPrefix, value: /passwordreset}
-        - path: {type: PathPrefix, value: /passwordresetconfirm}
-        - path: {type: PathPrefix, value: /invite}
         - path: {type: PathPrefix, value: /saml}
         - path: {type: PathPrefix, value: /plugins}
         - path: {type: PathPrefix, value: /integration}
