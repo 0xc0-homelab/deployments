@@ -11,9 +11,7 @@ spec:
   description: The cluster's shared services, from platform/ in this repo.
   # Only this repo is an Argo CD source; the charts and remote bases each
   # component pulls are pinned in its kustomization.yaml.
-  # Both names while the org moves to 0xc0-labs; the old one goes after.
   sourceRepos:
-    - https://github.com/0xc0-homelab/gitops.git
     - https://github.com/0xc0-labs/gitops.git
   destinations:
     - server: https://kubernetes.default.svc
@@ -35,9 +33,7 @@ metadata:
   namespace: argocd
 spec:
   description: The applications, from apps/ in this repo.
-  # Both names while the org moves to 0xc0-labs; the old one goes after.
   sourceRepos:
-    - https://github.com/0xc0-homelab/gitops.git
     - https://github.com/0xc0-labs/gitops.git
   destinations:
     - server: https://kubernetes.default.svc
