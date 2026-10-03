@@ -124,6 +124,12 @@ ports:
     # later the data services) cannot forge it.
     forwardedHeaders:
       trustedIPs: [10.10.4.11/32, 10.10.4.12/32]
+    # A span per middleware in every public request's trace: CrowdSec's
+    # bouncer (how long it and AppSec took, and the 403 when it blocks), the
+    # security headers, the routes' own. CrowdSec emits no traces of its own.
+    # The internal entrypoint stays minimal.
+    observability:
+      traceVerbosity: detailed
     # Every request on the entrypoint goes through CrowdSec's bouncer first
     # (crowdsec-bouncer.yaml), and every response gets the baseline security
     # headers (security-headers.yaml).
