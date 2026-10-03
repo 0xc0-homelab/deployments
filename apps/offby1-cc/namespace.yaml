@@ -8,3 +8,6 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: restricted
     gateway.0xc0.cc/web: "true"
+    # Logs in to Vault through the apps role, which reads apps/offby1-cc/*
+    # (vault-secrets.yaml).
+    vault.0xc0.cc/apps: "true"

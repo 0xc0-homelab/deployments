@@ -67,6 +67,14 @@ spec:
               value: http://openobserve-collector-gateway-collector.openobserve-collector.svc.cluster.local:4318
             - name: OTEL_SERVICE_NAME
               value: offby1-cc
+            # OpenObserve's RUM client token, for the browser (vault-secrets.yaml).
+            # Optional: without it the page renders with RUM off.
+            - name: OPENOBSERVE_RUM_CLIENT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: offby1-cc-rum-vault
+                  key: client_token
+                  optional: true
           ports:
             - name: http
               containerPort: 3000
