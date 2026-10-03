@@ -21,7 +21,7 @@ resources:
 configMapGenerator:
   - name: mariadb-config
     files:
-      - homelab.cnf
+      - 0xc0.cnf
 # No pruning: it holds data.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false

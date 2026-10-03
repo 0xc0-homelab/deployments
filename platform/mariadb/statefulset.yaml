@@ -96,8 +96,8 @@ spec:
             - name: data
               mountPath: /var/lib/mysql
             - name: config
-              mountPath: /etc/mysql/conf.d/homelab.cnf
-              subPath: homelab.cnf
+              mountPath: /etc/mysql/conf.d/0xc0.cnf
+              subPath: 0xc0.cnf
               readOnly: true
             - name: run
               mountPath: /run/mysqld
