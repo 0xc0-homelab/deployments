@@ -3,7 +3,7 @@
 # the links and unsubscribe pages of its emails, the sending provider's
 # callback), behind CrowdSec on websecure. Landing pages take any path, so the
 # public side cannot be an allowlist: everything a person uses is refused
-# there with a 403 (gitops#78), and is reached only at
+# there with a 403, and is reached only at
 # https://mautic.int.0xc0.cc, WARP only, with no hint of that name. That is
 # Mautic 7.2's own non-public firewall (/s, /elfinder, /efconnect, /api), plus
 # the user flows outside it (password reset, invites, SAML, OAuth), the
@@ -16,7 +16,7 @@
 # The one exception: the admin-user flows whose links go out by email, with
 # the public name (password reset, invites). Those redirect to the internal
 # name, path and query kept, so the link works for someone on WARP and leads
-# nowhere for anyone else (gitops#83).
+# nowhere for anyone else.
 #
 # Gateway API has no filter that refuses a request, so Traefik's own
 # middleware does: an allow list only Traefik's own loopback would match, and

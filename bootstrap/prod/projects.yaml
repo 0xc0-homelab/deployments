@@ -1,7 +1,7 @@
 # What each kind of workload may do, instead of Argo CD's default project,
 # which allows everything. The shared services are "platform": cluster-scoped
 # resources (CRDs, ClusterRoles, StorageClasses) and any namespace, from this
-# repo only. The applications of phase 6 get their own, narrower project.
+# repo only. The applications get their own, narrower project (below).
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:

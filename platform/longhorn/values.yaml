@@ -59,8 +59,7 @@ defaultSettings:
 # pod-network address (flannel.1, 10.42.N.0), not from platform, and
 # that address follows the podCIDR each node gets when it joins. So
 # neither is filtered by source, Longhorn's default: filtering on
-# 10.10.4.0/24 blocked every webhook call across nodes. Closing them
-# properly is #10.
+# 10.10.4.0/24 blocked every webhook call across nodes.
 networkPolicies:
   enabled: true
   restrictInternalTraffic: true

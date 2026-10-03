@@ -26,7 +26,7 @@ httpRoute:
       sectionName: internal
   hostnames:
     - headlamp.int.0xc0.cc
-# No OIDC yet (Vault, phase 3): no empty Secret for it either.
+# No OIDC: no empty Secret for it either.
 config:
   oidc:
     secret:

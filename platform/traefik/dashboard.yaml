@@ -1,6 +1,6 @@
 # Traefik's dashboard on the WARP-only path: https://traefik.int.0xc0.cc,
-# never public. It has no login of its own, so basic auth guards it until OIDC
-# (phase 3): the Secret ui-basic-auth-vault comes from Vault
+# never public. It has no login of its own, so basic auth guards it: the
+# Secret ui-basic-auth-vault comes from Vault
 # (platform/shared/ui-basic-auth) through Vault Secrets Operator
 # (vault-secrets.yaml). Its backend is Traefik's own api@internal.
 apiVersion: traefik.io/v1alpha1

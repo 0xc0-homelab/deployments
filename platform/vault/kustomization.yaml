@@ -1,4 +1,4 @@
-# Vault, the cluster's secrets store (phase 3; operator decision, 2026-09-24:
+# Vault, the cluster's secrets store (operator decision, 2026-09-24:
 # in the cluster, deployed from here). Three servers in HA over integrated
 # storage (Raft), one per node, on the WARP-only path at
 # https://vault.int.0xc0.cc: never public.

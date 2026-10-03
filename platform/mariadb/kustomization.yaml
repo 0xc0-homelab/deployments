@@ -1,5 +1,5 @@
 # MariaDB: the one MySQL-compatible server the applications share (operator
-# decision, 2026-10-02; gitops#71). One database and one user per application,
+# decision, 2026-10-02). One database and one user per application,
 # never a server per application. A plain StatefulSet from the official image,
 # no operator: an operator costs memory the cluster does not have to spare.
 #

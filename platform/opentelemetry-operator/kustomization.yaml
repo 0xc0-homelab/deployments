@@ -2,7 +2,7 @@
 # (openobserve-collector) from their OpenTelemetryCollector resources, with the
 # target allocator that turns the cluster's ServiceMonitors into scrape jobs.
 # Its admission webhook gets its certificate from the cert-manager already here.
-# Auto-instrumentation comes with the applications, in phase 6.
+# No auto-instrumentation: each application sends its own telemetry.
 #
 # Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1

@@ -1,6 +1,6 @@
 # Longhorn's UI on the WARP-only path: https://longhorn.int.0xc0.cc, never
-# public. It has no login and can delete volumes, so basic auth guards it until
-# OIDC: the Secret ui-basic-auth-vault comes from Vault
+# public. It has no login and can delete volumes, so basic auth guards it:
+# the Secret ui-basic-auth-vault comes from Vault
 # (platform/shared/ui-basic-auth) through Vault Secrets Operator
 # (vault-secrets.yaml).
 apiVersion: traefik.io/v1alpha1

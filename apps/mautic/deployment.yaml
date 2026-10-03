@@ -78,8 +78,8 @@ spec:
       # (mautic/docker-mautic#479), so the email builder never loads. The
       # release ZIP of the same version has them: this downloads it, checks
       # it against its pinned sha256, and keeps only the assets, for web.
-      # Remove it with the first image that ships them (gitops#87); until
-      # then, a bump of the image bumps the version and sha256 here too.
+      # Remove it with the first image that ships them; while it stays, a
+      # bump of the image bumps the version and sha256 here too.
       initContainers:
         - name: grapesjs-assets
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
@@ -311,7 +311,7 @@ spec:
             name: mautic-supervisord
         # Symfony's cache, outside the image: the image ships one built
         # before any plugin was enabled, in a layer cache:clear cannot
-        # rename on overlayfs (gitops#85). Built anew at every start, one
+        # rename on overlayfs. Built anew at every start, one
         # per container, so no two warm it at once.
         - name: cache-web
           emptyDir:

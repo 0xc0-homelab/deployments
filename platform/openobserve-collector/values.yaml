@@ -31,7 +31,7 @@ kube-state-metrics:
     limits:
       memory: 128Mi
 
-# No applications yet: auto-instrumentation comes in phase 6.
+# No auto-instrumentation: each application sends its own telemetry.
 autoinstrumentation:
   enabled: false
 
@@ -180,7 +180,7 @@ gateway:
           - IsMatch(name, "^zo_") and not IsMatch(name, "^zo_(ingest_(records|bytes|memtable_bytes|wal_used_bytes)|http_(incoming_requests|response_time)|storage_(write|read)_bytes|query_(running|pending)_nums|node_(disk|memory|cpu)_usage)")
           - IsMatch(name, "^otelcol_") and not IsMatch(name, "^otelcol_(exporter_(sent|send_failed|queue_size|queue_capacity)|receiver_(accepted|refused|failed)|processor_(incoming|outgoing|dropped))")
     # The API server's latency histogram, by verb only: by resource and scope
-    # it was millions of rows an hour, for a p99 by verb.
+    # it is millions of rows an hour, for a p99 by verb.
     transform/aggregate:
       error_mode: ignore
       metric_statements:

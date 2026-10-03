@@ -1,5 +1,5 @@
-# Mautic, marketing automation, ahead of phase 6 at the operator's request
-# (operator decision, 2026-10-02; gitops#73). One instance, the official image
+# Mautic, marketing automation (operator decision, 2026-10-02). One
+# instance, the official image
 # with its three roles as containers of one pod (deployment.yaml). Its
 # database is in the shared MariaDB (platform/mariadb). Public at
 # https://mautic.0xc0.cc for what contacts reach; the admin only at

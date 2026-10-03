@@ -65,10 +65,11 @@ folders are left alone, so the UI stays free for trying things.
     (querier, ingester pods). Its own `zo_*` metrics are scraped
     (`ZO_PROMETHEUS_ENABLED`, the chart's ServiceMonitor) into one of ours
     instead.
-- **The homelab's own**, for what the repository has nothing for, or nothing
+- **Written here**, for what the repository has nothing for, or nothing
   that works here: the Kubernetes API server, Traefik, Longhorn, Vault,
-  CrowdSec, etcd and OpenObserve itself. PromQL over what the collector scrapes; every query was
-  checked against OpenObserve before it was committed.
+  CrowdSec, etcd and OpenObserve itself. PromQL over what the collector
+  scrapes; every query was checked against OpenObserve before it was
+  committed.
 
 **Changing or adding one:** edit it in the UI in any folder but `homelab`,
 export it (dashboard → settings → export JSON), save it here as
@@ -82,8 +83,8 @@ the files into a second ConfigMap mounted next to the first.
 
 ## Alerts
 
-None yet (operator decision, 2026-10-02). When they come, mail can go to
-sergio@0xc0.cc, which Cloudflare Email Routing forwards (infrastructure#157).
+There are none (operator decision, 2026-10-02). If any are added, mail can go
+to sergio@0xc0.cc, which Cloudflare Email Routing forwards.
 
 ## Checking every target is up
 

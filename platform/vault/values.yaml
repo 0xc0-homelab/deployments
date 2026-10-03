@@ -5,8 +5,8 @@
 global:
   # Traefik ends TLS on the internal path; inside the cluster the API (8200)
   # is plain HTTP, held in by network-policy.yaml. The cluster port (8201,
-  # Raft and forwarding) is TLS with Vault's own certificates. Pod-to-pod TLS
-  # on the API is a follow-up.
+  # Raft and forwarding) is TLS with Vault's own certificates. The API has no
+  # pod-to-pod TLS.
   tlsDisable: true
 # Vault Secrets Operator brings secrets into the cluster: no agent injector.
 injector:

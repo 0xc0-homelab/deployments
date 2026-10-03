@@ -2,7 +2,8 @@
 
 The offby1.cc landing page: the Node server of 0xc0-labs/offby1.cc, public
 at `https://offby1.cc`; `www.offby1.cc` redirects there (`httproute.yaml`).
-No secrets and no volumes.
+No volumes. Its one secret is OpenObserve's RUM client token, from Vault
+(`vault-secrets.yaml`).
 
 ## Upgrades
 

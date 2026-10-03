@@ -5,7 +5,7 @@
 # and never stored, taken over WARP when needed:
 #   kubectl -n headlamp create token headlamp-admin --duration 8h
 # Whoever may create tokens for it in this namespace is cluster-admin: an
-# accepted risk until OIDC with Vault replaces it, in phase 3.
+# accepted risk: there is no OIDC login.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

@@ -1,6 +1,6 @@
 # gitops
 
-What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
+What runs in the Kubernetes cluster, as manifests ArgoCD applies.
 
 - `bootstrap/prod/` — what the root `Application` syncs; the `argocd` role in
   `infrastructure` writes that root. It holds the `AppProject`s and the
@@ -13,32 +13,28 @@ What runs in the homelab's Kubernetes cluster, as manifests ArgoCD applies.
   NetworkPolicies); `patches` for tweaks. Adding a component is adding its
   directory. Its Application's destination namespace is the directory's name:
   Argo CD puts there what a chart leaves without one, because Kustomize's
-  `namespace` field does not reach what `helmCharts` inflates. A component holding data or CRDs sets `Prune=false` through
-  `commonAnnotations`.
+  `namespace` field does not reach what `helmCharts` inflates. A component
+  holding data or CRDs sets `Prune=false` through `commonAnnotations`.
 - `apps/<application>/` — the applications, the same pattern under the
   `apps` ApplicationSet and its narrower `AppProject`: namespaced resources
-  only, and their own Namespace. Mautic came ahead of phase 6 at the
-  operator's request (2026-10-02, #73), and so did offby1-cc, the offby1.cc
-  landing page (2026-10-02, 0xc0-labs/offby1.cc#1).
+  only, and their own Namespace. Today: Mautic and offby1-cc, the offby1.cc
+  landing page.
 - ArgoCD itself is installed and upgraded by RKE2's helm-controller, never
   from here.
 
-Operator decision, 2026-09-29 (#16): an ApplicationSet over Kustomize
+Operator decision, 2026-09-29: an ApplicationSet over Kustomize
 components, instead of hand-written `Application`s with inline values.
 
-## CURRENT PHASE: 3 (Platform)
-
-Phase 2 built the RKE2 cluster and ArgoCD (workspace `docs/design.md`):
-ArgoCD syncs `bootstrap/prod/`, and through it `platform/`, from `main`.
-Phase 3 brings the platform's shared services: Vault and Vault Secrets
-Operator are in, monitoring comes next.
+ArgoCD syncs `bootstrap/prod/`, and through it `platform/` and `apps/`, from
+`main` (workspace `docs/design.md`).
 
 ## What goes where
 
-One RKE2 cluster, in the `platform` zone, holds everything after phase 1:
+One RKE2 cluster, in the `platform` zone, holds every shared service and
+application:
 
-- **Shared services**: ArgoCD, Vault, OpenObserve (metrics, logs, traces), data services
-  (Postgres, MariaDB, Redis).
+- **Shared services**: ArgoCD, Vault, OpenObserve (metrics, logs, traces), and
+  the data services: one shared MariaDB.
 - **Applications**.
 
 They are separated by namespace and NetworkPolicy. Traffic enters through the
@@ -79,7 +75,7 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
 - **The WAF lives at the ingress**: CrowdSec's bouncer on Traefik's
   entrypoint. Do not duplicate it in a service. Behind Cloudflare, the client
   is `CF-Connecting-IP`, trusted only from `platform`.
-- **Security headers in two layers** (#95). Traefik sets the baseline on
+- **Security headers in two layers**. Traefik sets the baseline on
   every entrypoint (`platform/traefik/security-headers.yaml`: HSTS with
   subdomains, nosniff, Referrer-Policy); an application never repeats it.
   What depends on the application (framing, Permissions-Policy, COOP/CORP)
