@@ -1,6 +1,4 @@
-# The UI and API, on the WARP-only path. OpenObserve has a login of its own: no
-# basic auth in front. The chart's own route is off: it adds rules with no
-# backend for /metrics, meant for Envoy Gateway.
+# Not the chart's route: it adds backendless /metrics rules for Envoy Gateway.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

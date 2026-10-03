@@ -1,8 +1,6 @@
-# Values for the headlamp chart (kustomization.yaml pins its version).
-# Pinned by digest, the multi-arch index. Bumping is its own commit.
 image:
   tag: "v0.45.0@sha256:db3f0e0fc58d358d41daa3fe7fc852437552c7ee873c3645470f7b86a8e0db49"
-# The pod is not cluster-admin: every user logs in with a token of their own.
+# Not cluster-admin: every user brings a token of their own (admin.yaml).
 clusterRoleBinding:
   create: false
 podSecurityContext:
@@ -17,7 +15,6 @@ securityContext:
   readOnlyRootFilesystem: true
   capabilities:
     drop: [ALL]
-# The WARP-only path: the Gateway's internal listener, *.int.0xc0.cc.
 httpRoute:
   enabled: true
   parentRefs:

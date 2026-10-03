@@ -1,11 +1,9 @@
-# Who logs in to Headlamp. Day to day, read-only: a token of headlamp-viewer
-# (the view ClusterRole: no Secrets, no changes), valid for 30 days:
+# Logins are tokens: headlamp-viewer day to day, headlamp-admin short-lived
+# and never stored:
 #   kubectl -n headlamp create token headlamp-viewer --duration 720h
-# To change something, cluster-admin: a token of headlamp-admin, short-lived
-# and never stored, taken over WARP when needed:
 #   kubectl -n headlamp create token headlamp-admin --duration 8h
-# Whoever may create tokens for it in this namespace is cluster-admin: an
-# accepted risk: there is no OIDC login.
+# Whoever may create tokens here is cluster-admin: an accepted risk, with no
+# OIDC.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

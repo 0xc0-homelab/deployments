@@ -1,9 +1,5 @@
-# Traefik denies ingress but for its entrypoints, web, websecure and internal,
-# from the two load balancers (vm-lb-01, vm-lb-02): HAProxy connects from each
-# one's own address, which the NodePort keeps (externalTrafficPolicy Local).
-# Nothing else in platform, the nodes included, reaches it. Its metrics (9100)
-# are open to OpenObserve's collector only; its dashboard and ping stay closed; kubelet's probes come from the pod's own node,
-# which a NetworkPolicy always allows.
+# Only the load balancers reach the entrypoints: HAProxy connects from each
+# one's own address, which externalTrafficPolicy Local keeps.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -39,7 +35,6 @@ spec:
         - protocol: TCP
           port: 8444
 ---
-# Traefik's metrics, scraped by OpenObserve's collector only.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

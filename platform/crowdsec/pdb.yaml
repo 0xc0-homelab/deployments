@@ -1,5 +1,4 @@
-# One AppSec pod stays up through a drain: without it, Traefik's bouncer
-# answers 403 to everything.
+# Without AppSec, Traefik's bouncer answers 403 to everything.
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:

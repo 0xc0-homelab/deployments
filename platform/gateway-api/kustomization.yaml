@@ -1,12 +1,8 @@
-# The Gateway API's standard CRDs, at the version Traefik 3.7 supports
-# (v1.6.2), from the project's repo pinned by tag. Their own component, so
-# Traefik's chart never carries them.
+# The version Traefik 3.7 supports. Kept out of Traefik's chart.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  # The project's own kustomization of its standard channel.
   - https://github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.6.2
-# Removing a CRD deletes every object of its kind: never as a side effect of a
-# sync.
+# Removing a CRD deletes every object of its kind.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false

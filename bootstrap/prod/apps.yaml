@@ -1,7 +1,3 @@
-# One Application per directory under apps/, each a Kustomize component, the
-# same pattern as platform.yaml, in the narrower apps project. Adding an
-# application is adding its directory. The Applications keep the directory's
-# name.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -16,16 +12,15 @@ spec:
         revision: main
         directories:
           - path: apps/*
-  # Deleting the ApplicationSet, or one of its Applications, never deletes what
-  # they deployed. None carries Argo CD's cascading finalizer either.
+  # Deleting the ApplicationSet or an Application never deletes what it
+  # deployed.
   syncPolicy:
     preserveResourcesOnDeletion: true
   template:
     metadata:
       name: "{{ .path.basename }}"
-      # Diff against the API server's dry-run of the apply, not the manifest
-      # alone: the fields it defaults (a Gateway listener's tls.mode, an
-      # HTTPRoute's group, kind and weight) are not drift.
+      # Fields the API server defaults (a listener's tls.mode, a route's
+      # weight) are not drift.
       annotations:
         argocd.argoproj.io/compare-options: ServerSideDiff=true
     spec:
@@ -36,22 +31,18 @@ spec:
         path: "{{ .path.path }}"
       destination:
         server: https://kubernetes.default.svc
-        # For what a chart leaves without a namespace, as helm install -n
-        # would: Kustomize's namespace field does not reach what helmCharts
-        # inflates. A chart that sets its own (Longhorn's longhorn-system)
-        # keeps it.
+        # For what a chart leaves without one: Kustomize's namespace field
+        # does not reach what helmCharts inflates.
         namespace: "{{ .path.basename }}"
       syncPolicy:
-        # Pruning stays on for most; the components that hold data or CRDs
-        # opt out per resource (Prune=false in their kustomization.yaml).
+        # Components holding data or CRDs opt out with Prune=false.
         automated:
           prune: true
           selfHeal: true
         syncOptions:
           # Some CRDs are too large for client-side apply's annotation.
           - ServerSideApply=true
-        # A component whose CRDs or StorageClass come from another waits for
-        # them by retrying, rather than by a numbered order.
+        # Retrying, not sync waves, orders components that need another's CRDs.
         retry:
           limit: 10
           backoff:

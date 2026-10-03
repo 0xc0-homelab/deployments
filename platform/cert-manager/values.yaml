@@ -1,5 +1,3 @@
-# Values for the cert-manager chart (kustomization.yaml pins its version).
-# Images pinned by digest, the multi-arch index. Bumping is its own commit.
 crds:
   enabled: true
   keep: true
@@ -14,15 +12,12 @@ cainjector:
 acmesolver:
   image:
     digest: sha256:699b40d622211ab7accad8a21b04c5fbaa1841ef7a12621e8de492dbe27b2503
-# A Helm test in all but name; Argo CD would run it as a hook on every sync.
+# A Helm test in all but name: Argo CD would run it on every sync.
 startupapicheck:
   enabled: false
-# The DNS-01 self-check asks Cloudflare's resolvers, never the cluster's: the
-# TXT record must be visible from outside before Let's Encrypt is asked.
+# The TXT record must be visible from outside before Let's Encrypt is asked.
 dns01RecursiveNameservers: "1.1.1.1:53,1.0.0.1:53"
 dns01RecursiveNameserversOnly: true
-# Metrics (9402) for OpenObserve's collector: the controller's and the
-# webhook's.
 prometheus:
   enabled: true
   servicemonitor:

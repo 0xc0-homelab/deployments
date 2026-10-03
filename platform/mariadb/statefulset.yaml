@@ -1,7 +1,4 @@
-# One server, one replica. The root user is created at its first start from
-# MARIADB_ROOT_PASSWORD; each application's database and user arrive with
-# that application. MARIADB_AUTO_UPGRADE runs mariadb-upgrade when the image's
-# version changes, so a bump of the digest is the whole upgrade.
+# MARIADB_AUTO_UPGRADE: a bump of the digest is the whole upgrade.
 apiVersion: v1
 kind: Service
 metadata:
@@ -48,7 +45,6 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        # The image's mysql user and group.
         runAsUser: 999
         runAsGroup: 999
         fsGroup: 999
@@ -69,8 +65,6 @@ spec:
           ports:
             - name: mysql
               containerPort: 3306
-          # healthcheck.sh logs in as the healthcheck user the entrypoint
-          # creates at the first start, from the datadir's own credentials.
           startupProbe:
             exec:
               command: [healthcheck.sh, --connect, --innodb_initialized]
@@ -117,8 +111,7 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
-  # Backup: PBS's nightly backup of the RKE2 VMs (03:00), with the logical
-  # dumps of dumps.yaml for one database alone (kustomization.yaml, Backups).
+  # Backup: PBS's nightly backup of the RKE2 VMs, plus dumps.yaml.
   volumeClaimTemplates:
     - metadata:
         name: data

@@ -1,12 +1,8 @@
-# Each application's database and user, from its password in Vault: one
-# directory per application under /databases, named after its database and
-# user, holding its password. After every sync (a PostSync hook), idempotent:
-# it creates what is missing and sets each user's password to Vault's, so a
-# rotation is a write to Vault and a sync of this Application.
+# Idempotent, after every sync: creates what is missing and sets each user's
+# password to Vault's, so a rotation is a write to Vault and a sync.
 #
-# Adding an application: its VaultStaticSecret here (its policy in the vault
-# repo grants mariadb its path, by name), a volume and mount below, and its
-# namespace in network-policy.yaml.
+# Adding an application: its VaultStaticSecret here, a volume and mount below,
+# and its namespace in network-policy.yaml.
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
 metadata:

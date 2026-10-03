@@ -1,6 +1,3 @@
-# The landing page's Node server. The image is pinned by digest: each bump is
-# the tag@digest that the container-image job prints in its summary, on the
-# push to main of 0xc0-labs/offby1.cc (README.md).
 apiVersion: v1
 kind: Service
 metadata:
@@ -42,8 +39,6 @@ spec:
         runAsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
-      # One replica per node where it can, so a drain or a node down leaves
-      # the other serving.
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -55,19 +50,16 @@ spec:
         - name: web
           image: ghcr.io/0xc0-labs/offby1.cc:sha-c193732@sha256:4cb98ee194f88202a191f623bed0573b246ccf9665052efff26fc5e351d6bf68
           env:
-            # Next.js binds to $HOSTNAME, which the runtime sets to the pod's
-            # name over the image's own value: bind every address instead.
+            # Next.js binds to $HOSTNAME, which Kubernetes sets to the pod's
+            # name.
             - name: HOSTNAME
               value: 0.0.0.0
             - name: NEXT_TELEMETRY_DISABLED
               value: "1"
-            # Its server spans, to OpenObserve's collector over OTLP HTTP
-            # (src/instrumentation.ts in the app's repo; network-policy.yaml).
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: http://openobserve-collector-gateway-collector.openobserve-collector.svc.cluster.local:4318
             - name: OTEL_SERVICE_NAME
               value: offby1-cc
-            # OpenObserve's RUM client token, for the browser (vault-secrets.yaml).
             # Optional: without it the page renders with RUM off.
             - name: OPENOBSERVE_RUM_CLIENT_TOKEN
               valueFrom:
@@ -101,7 +93,6 @@ spec:
             limits:
               memory: 256Mi
           volumeMounts:
-            # Next.js's cache, the only path it writes.
             - name: cache
               mountPath: /app/.next/cache
             - name: tmp

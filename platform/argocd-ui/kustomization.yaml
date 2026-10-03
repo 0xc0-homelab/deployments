@@ -1,8 +1,5 @@
-# ArgoCD's UI on the WARP-only path: https://argocd.int.0xc0.cc, never public
-# (operator decision, 2026-09-30). Only the route lives here: ArgoCD itself is
-# installed and upgraded by RKE2's helm-controller (infrastructure, the argocd
-# role), which also labels its namespace for the internal listener and runs
-# its server behind Traefik's TLS. Login is the admin user: there is no SSO.
+# Only the route: ArgoCD itself comes from RKE2's helm-controller
+# (infrastructure, the argocd role). WARP only (operator decision, 2026-09-30).
 #
 # Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1

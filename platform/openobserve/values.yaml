@@ -1,7 +1,5 @@
 fullnameOverride: openobserve
 
-# The root user from Vault (platform/shared/openobserve-root), through Vault
-# Secrets Operator (vault-secrets.yaml): never in this file.
 auth:
   existingRootUserSecret:
     name: openobserve-root-vault
@@ -10,31 +8,20 @@ auth:
 
 config:
   ZO_WEB_URL: https://o2.int.0xc0.cc
-  # Warnings and errors only. At info, it logs every ingestion request, the
-  # collectors bring those lines back, and they were 98% of all logs.
+  # At info, its ingestion log lines were 98% of all logs.
   RUST_LOG: warn
-  # On by default, and not under RUST_LOG: it prints the SQL and the physical
-  # plan of every query and every compaction straight to stdout, ~3,500 lines
-  # a minute, each line a record once collected.
+  # On by default, outside RUST_LOG: ~3,500 lines a minute of query plans.
   ZO_PRINT_KEY_SQL: "false"
-  # 30 days of everything; the volume is sized for it.
+  # The volume is sized for it.
   ZO_COMPACT_DATA_RETENTION_DAYS: "30"
-  # Nothing leaves for OpenObserve's servers: no telemetry, no GeoIP download.
   ZO_TELEMETRY: "false"
   ZO_MMDB_DISABLE_DOWNLOAD: "true"
-  # Its own metrics (zo_*) on /metrics, scraped by the collector through the
-  # ServiceMonitor below. Self-consumption stays off: it ingests nothing
-  # without an accept list, and the scrape covers it.
   ZO_PROMETHEUS_ENABLED: "true"
-  # Bounded caches, so it stays inside its memory limit. In MB.
+  # In MB, to stay inside its memory limit.
   ZO_MEMORY_CACHE_MAX_SIZE: "256"
   ZO_MEMORY_CACHE_DATAFUSION_MAX_SIZE: "256"
-  # Ingestion. A memtable rotates for the disk at ZO_MAX_FILE_SIZE_IN_MEMORY
-  # (512 by default) or after ZO_MAX_FILE_RETENTION_TIME, and all of them
-  # together are capped at ZO_MEM_TABLE_MAX_SIZE, past which every write gets
-  # a 503 (MemoryTableOverflowError). With the rotation size as large as the
-  # cap, the active memtable filled it before it ever rotated: rotate at 64,
-  # well under it.
+  # Past the memtable cap every write gets a 503. Rotate well under it: with
+  # both at 512, the active memtable filled the cap before it ever rotated.
   ZO_MEM_TABLE_MAX_SIZE: "512"
   ZO_MAX_FILE_SIZE_IN_MEMORY: "64"
   ZO_MAX_FILE_RETENTION_TIME: "120"
@@ -44,7 +31,6 @@ persistence:
   size: 50Gi
   storageClass: longhorn
 
-# Pod Security "restricted".
 securityContext:
   allowPrivilegeEscalation: false
   capabilities:
@@ -52,7 +38,6 @@ securityContext:
   seccompProfile:
     type: RuntimeDefault
 
-# Little CPU to reserve: the nodes' requests are already high.
 # Measured at 1.3 GiB with every target in (2026-10-01).
 resources:
   requests:
@@ -63,5 +48,4 @@ resources:
 
 serviceMonitor:
   enabled: true
-  # Once a minute, like the rest (openobserve-collector).
   interval: 60s

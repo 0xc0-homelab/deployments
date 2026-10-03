@@ -1,10 +1,7 @@
-# Longhorn: the cluster's storage, and its default StorageClass. Every volume
-# has three replicas on different nodes, on each RKE2 node's two data disks
-# (servers and agents), which the longhorn_node role in infrastructure joins
-# into /var/lib/longhorn.
+# Data disks joined into /var/lib/longhorn by infrastructure's longhorn_node.
 #
-# Backups: none of its own. PBS backs every RKE2 VM up whole, data disks
-# included, so every Longhorn volume is in the VM backups.
+# Backups: none of its own. PBS backs up every RKE2 VM whole, data disks
+# included.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: longhorn-system
@@ -24,9 +21,8 @@ resources:
   - ui.yaml
   - recurring-jobs.yaml
 patches:
-  # The chart's pre-delete hook uninstalls Longhorn. Argo CD runs it when the
-  # Application is deleted, and gives the Application a finalizer for it: a
-  # GitOps-managed Longhorn never uninstalls itself as a side effect.
+  # Argo CD would run this pre-delete hook, uninstalling Longhorn, whenever
+  # the Application is deleted.
   - target:
       kind: Job
       name: longhorn-uninstall
@@ -36,7 +32,6 @@ patches:
       kind: Job
       metadata:
         name: longhorn-uninstall
-# No pruning: deleting what holds the cluster's data is never a side effect of
-# a sync.
+# No pruning: it holds the cluster's data.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false

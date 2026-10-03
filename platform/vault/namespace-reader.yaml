@@ -1,8 +1,5 @@
-# Vault reads namespaces, and nothing else about them: the apps Kubernetes
-# auth role admits the namespaces labelled vault.0xc0.cc/apps (vault repo,
-# terraform.tfvars), and Vault looks the login's namespace up to check the
-# label. Beside the chart's auth-delegator binding, which lets it check the
-# token itself.
+# The apps auth role admits namespaces by the vault.0xc0.cc/apps label:
+# Vault looks the login's namespace up to check it.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

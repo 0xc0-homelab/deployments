@@ -1,7 +1,3 @@
-# Traefik, the cluster's ingress, with the Gateway API. One pod per node,
-# behind the NodePorts the load balancers' HAProxy sends the VIP's 80 and 443
-# to. TLS ends here, with a Let's Encrypt wildcard per domain from
-# cert-manager, for the public tunnel and WARP alike; 80 only redirects.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: traefik

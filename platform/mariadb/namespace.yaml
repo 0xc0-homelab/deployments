@@ -1,4 +1,3 @@
-# No route: MariaDB is reached only from inside the cluster.
 apiVersion: v1
 kind: Namespace
 metadata:

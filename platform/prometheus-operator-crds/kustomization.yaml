@@ -1,7 +1,5 @@
-# The Prometheus Operator's CRDs, and nothing else: ServiceMonitor and
-# PodMonitor are how each component declares its metrics, and the
-# OpenTelemetry collector's target allocator reads them (openobserve-collector).
-# No Prometheus runs here.
+# CRDs only: the collectors' target allocator reads the ServiceMonitors. No
+# Prometheus runs here.
 #
 # Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -13,6 +11,6 @@ helmCharts:
     releaseName: prometheus-operator-crds
     kubeVersion: "1.36.4"
     includeCRDs: true
-# No pruning: CRDs, and every ServiceMonitor in the cluster hangs off them.
+# No pruning: every ServiceMonitor hangs off these CRDs.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false

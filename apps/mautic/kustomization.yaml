@@ -1,11 +1,4 @@
-# Mautic, marketing automation (operator decision, 2026-10-02). One
-# instance, the official image
-# with its three roles as containers of one pod (deployment.yaml). Its
-# database is in the shared MariaDB (platform/mariadb). Public at
-# https://mautic.0xc0.cc for what contacts reach; the admin only at
-# https://mautic.int.0xc0.cc, over WARP; the public name refuses it
-# (httproute.yaml). Installed once by
-# hand: README.md.
+# Mautic (operator decision, 2026-10-02). Installed once by hand: README.md.
 #
 # Backups:
 # - mautic-data (Longhorn, 5Gi): local.php, logs and uploaded media, covered
@@ -20,8 +13,7 @@ resources:
   - vault-secrets.yaml
   - deployment.yaml
   - httproute.yaml
-# Hashed: a change to it is a new name, so a rollout of the pod. Nothing is
-# pruned here, so the old one stays behind; it is a few hundred bytes.
+# Hashed, so a change rolls the pod. Old ones stay behind (no pruning).
 configMapGenerator:
   - name: mautic-supervisord
     files:

@@ -1,4 +1,4 @@
-# The agents read every node's container logs through a hostPath: privileged.
+# The agents read the nodes' container logs through a hostPath.
 apiVersion: v1
 kind: Namespace
 metadata:

@@ -1,5 +1,3 @@
-# CrowdSec's pods deny ingress but what they are for. Its metrics (6060) are
-# open to OpenObserve's collector only; kubelet's probes come from the pod's own node, always allowed.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -10,8 +8,6 @@ spec:
   policyTypes:
     - Ingress
 ---
-# The LAPI: Traefik's bouncer pulls its decisions, and CrowdSec's own agents
-# and AppSec component report to it.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -39,7 +35,6 @@ spec:
         - protocol: TCP
           port: 8080
 ---
-# AppSec, the WAF: only Traefik's bouncer sends it requests.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -64,8 +59,6 @@ spec:
         - protocol: TCP
           port: 7422
 ---
-# The LAPI's, the agents' and AppSec's metrics, scraped by OpenObserve's
-# collector only.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

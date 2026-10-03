@@ -1,7 +1,4 @@
-# The landing page denies everything but its HTTP port (3000), from Traefik,
-# and one way out: its traces, to OpenObserve's collector over OTLP HTTP
-# (4318), with the DNS lookup that takes. The contact form delivers nothing
-# (it only logs), so nothing else goes out.
+# The only way out is traces to the collector: the contact form only logs.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

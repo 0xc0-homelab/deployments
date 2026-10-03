@@ -1,6 +1,4 @@
-# Values for the longhorn chart (kustomization.yaml pins its version).
-# Pinned by digest, each the multi-arch index, from the chart's own
-# values.yaml. Bumping is its own commit: the chart and its images.
+# Every image the chart's values.yaml lists: a chart bump bumps them all.
 image:
   longhorn:
     engine:
@@ -43,8 +41,7 @@ image:
     livenessProbe:
       repository: longhornio/livenessprobe
       tag: "v2.20.0@sha256:d1199b77452bfc11cfc62feb8a266758fe8d72953e97faac8065941e3767f1a3"
-# Longhorn's install guide for Argo CD: its pre-upgrade hook job does
-# not fit a GitOps sync.
+# Per Longhorn's guide for Argo CD.
 preUpgradeChecker:
   jobEnabled: false
 persistence:
@@ -53,20 +50,15 @@ persistence:
 defaultSettings:
   defaultDataPath: /var/lib/longhorn
   defaultReplicaCount: 3
-# Longhorn's pods deny what they do not need from each other. The
-# webhook's caller (the API server) and the iSCSI initiators run on the
-# nodes' own network, but under Canal they reach a pod from the node's
-# pod-network address (flannel.1, 10.42.N.0), not from platform, and
-# that address follows the podCIDR each node gets when it joins. So
-# neither is filtered by source, Longhorn's default: filtering on
-# 10.10.4.0/24 blocked every webhook call across nodes.
+# Empty CIDRs: under Canal the API server and iSCSI initiators come from each
+# node's pod-network address (10.42.N.0), not 10.10.4.0/24; filtering on it
+# blocked every webhook call across nodes.
 networkPolicies:
   enabled: true
   restrictInternalTraffic: true
   type: rke2
   kubeAPIServerSourceCIDRs: []
   v1DataEngineInitiatorSourceCIDRs: []
-# The manager's metrics (9500) for OpenObserve's collector.
 metrics:
   serviceMonitor:
     enabled: true

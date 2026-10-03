@@ -1,35 +1,27 @@
-# Values for the traefik chart (kustomization.yaml pins its version).
-# Pinned by digest, the multi-arch index. Bumping is its own commit.
 image:
   registry: docker.io
   repository: traefik
   tag: v3.7.13
   digest: sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0
-# One per node: with externalTrafficPolicy Local, a node answers the
-# NodePort only through its own pod, and the source address survives.
+# With externalTrafficPolicy Local, a node answers only through its own pod.
 deployment:
   kind: DaemonSet
 providers:
   kubernetesGateway:
     enabled: true
-  # Traefik's own CRDs, for Middlewares: CrowdSec's bouncer is one.
+  # For Middlewares: CrowdSec's bouncer is one.
   kubernetesCRD:
     enabled: true
   kubernetesIngress:
     enabled: false
-# Routes are Gateway API only: no IngressClass either.
 ingressClass:
   enabled: false
 gateway:
-  # external-dns (platform/external-dns) points a public route's name at the
-  # public tunnel (infrastructure: tofu output public_tunnel_id).
+  # The public tunnel (infrastructure: tofu output public_tunnel_id).
   annotations:
     external-dns.kubernetes.io/target: 2bca7b27-f56a-4d12-bb93-079837015367.cfargotunnel.com
-  # One HTTPS listener per name pattern, each with its domain's wildcard
-  # (certificates.yaml). A namespace opts in to attach routes with the label
-  # gateway.0xc0.cc/web: "true"; no other can claim a hostname. web only
-  # redirects to HTTPS, so no route attaches to it. The API server's defaults
-  # (mode, group, kind) are written out, or Argo CD sees a diff forever.
+  # Only namespaces labelled gateway.0xc0.cc/web: "true" attach routes. The
+  # API server's defaults are written out, or Argo CD sees a diff forever.
   listeners:
     web:
       port: 8000
@@ -70,8 +62,7 @@ gateway:
           group: ""
           kind: Secret
       namespacePolicy: *routes
-    # The WARP-only path: every *.int.0xc0.cc name, on the internal
-    # entrypoint. A namespace opts in with gateway.0xc0.cc/internal: "true".
+    # WARP only. A namespace opts in with gateway.0xc0.cc/internal: "true".
     internal:
       port: 8444
       protocol: HTTPS
@@ -99,12 +90,10 @@ gateway:
 service:
   spec:
     type: NodePort
-    # No SNAT on the way in: Traefik sees the load balancer's
-    # address, so it can trust its forwarded headers and nobody
-    # else's.
+    # No SNAT: Traefik sees the load balancer's address, so it trusts its
+    # forwarded headers and nobody else's.
     externalTrafficPolicy: Local
 ports:
-  # Plain HTTP only redirects to HTTPS.
   web:
     nodePort: 30080
     http:
@@ -113,33 +102,20 @@ ports:
           to: websecure
           scheme: https
           permanent: true
-  # TLS ends here, with Let's Encrypt (certificates.yaml), for the public
-  # tunnel and WARP alike.
   websecure:
     nodePort: 30443
-    # The client's address comes in X-Forwarded-For, which cloudflared
-    # sets (with CF-Connecting-IP). Trusted only from the two load
-    # balancers, vm-lb-01 and vm-lb-02: HAProxy connects from each
-    # one's own address, not the VIP. The rest of platform, the nodes
-    # included, cannot forge it.
+    # vm-lb-01 and vm-lb-02: HAProxy connects from each one's own address,
+    # not the VIP.
     forwardedHeaders:
       trustedIPs: [10.10.4.11/32, 10.10.4.12/32]
-    # A span per middleware in every public request's trace: CrowdSec's
-    # bouncer (how long it and AppSec took, and the 403 when it blocks), the
-    # security headers, the routes' own. CrowdSec emits no traces of its own.
-    # The internal entrypoint stays minimal.
+    # A span per middleware: CrowdSec emits no traces of its own.
     observability:
       traceVerbosity: detailed
-    # Every request on the entrypoint goes through CrowdSec's bouncer first
-    # (crowdsec-bouncer.yaml), and every response gets the baseline security
-    # headers (security-headers.yaml).
     http:
       middlewares:
         - traefik-crowdsec-bouncer@kubernetescrd
         - traefik-security-headers@kubernetescrd
-  # The WARP-only path: HAProxy sends the internal VIP's 443 here, and the
-  # public tunnel never does. No forwarded headers to trust (WARP sets none)
-  # and no bouncer (no public client to filter).
+  # The internal VIP's 443; the public tunnel never comes here, so no bouncer.
   internal:
     port: 8444
     nodePort: 30444
@@ -150,33 +126,21 @@ ports:
     http:
       tls:
         enabled: true
-      # The same baseline security headers as websecure
-      # (security-headers.yaml).
       middlewares:
         - traefik-security-headers@kubernetescrd
-# What CrowdSec reads.
 accessLog:
   enabled: true
   format: json
-# CrowdSec's bouncer, as a Traefik plugin pinned by version. Traefik fetches
-# it from its plugin catalogue when it starts.
 experimental:
   plugins:
     crowdsec-bouncer:
       moduleName: github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
       version: v1.7.1
-# The bouncer's LAPI key, from Vault (platform/shared/crowdsec-bouncer)
-# through Vault Secrets Operator (vault-secrets.yaml), read by the plugin as a
-# file.
 volumes:
   - name: crowdsec-bouncer-vault
     mountPath: /etc/traefik/crowdsec
     type: secret
-# Metrics for OpenObserve's collector (platform/openobserve-collector): a
-# dedicated ClusterIP Service on the metrics entrypoint (9100, not exposed on
-# the NodePort Service) and the ServiceMonitor that scrapes it. The API check
-# is off: Kustomize renders without the cluster's API versions, and the CRD
-# comes from platform/prometheus-operator-crds.
+# The API check is off: Kustomize renders without the cluster's API versions.
 metrics:
   prometheus:
     disableAPICheck: true
@@ -184,8 +148,7 @@ metrics:
       enabled: true
     serviceMonitor:
       enabled: true
-# Traces to the same collector, over OTLP gRPC. Plain, in-cluster. Every
-# request is traced (the default sample rate, 1.0): traffic is low.
+# Every request is traced (the default sample rate): traffic is low.
 tracing:
   otlp:
     enabled: true
