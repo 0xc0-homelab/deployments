@@ -53,7 +53,7 @@ spec:
               app.kubernetes.io/name: offby1-cc
       containers:
         - name: web
-          image: ghcr.io/0xc0-homelab/offby1.cc:sha-a79e3ec@sha256:3d690b537bc9897827a9fffe885b851f94e55feef62efd290d075fe2cd2045ba
+          image: ghcr.io/0xc0-homelab/offby1.cc:sha-c193732@sha256:4cb98ee194f88202a191f623bed0573b246ccf9665052efff26fc5e351d6bf68
           env:
             # Next.js binds to $HOSTNAME, which the runtime sets to the pod's
             # name over the image's own value: bind every address instead.
