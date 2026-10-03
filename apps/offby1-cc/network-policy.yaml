@@ -1,6 +1,7 @@
-# The landing page denies everything but its HTTP port (3000), from Traefik.
-# No egress at all: it calls nothing, not even DNS. The contact form's
-# delivery opens what it needs, when it comes.
+# The landing page denies everything but its HTTP port (3000), from Traefik,
+# and one way out: its traces, to OpenObserve's collector over OTLP HTTP
+# (4318), with the DNS lookup that takes. The contact form's delivery opens
+# what it needs, when it comes.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -34,3 +35,39 @@ spec:
       ports:
         - protocol: TCP
           port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: otlp-to-collector
+  namespace: offby1-cc
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: offby1-cc
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve-collector
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/component: opentelemetry-collector
+              app.kubernetes.io/instance: openobserve-collector.openobserve-collector-gateway
+      ports:
+        - protocol: TCP
+          port: 4318
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

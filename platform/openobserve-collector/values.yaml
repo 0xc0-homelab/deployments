@@ -62,8 +62,9 @@ agent:
   # and the container runtime's format carries none. Tried in order, the first
   # match wins: JSON ("level":"info", VSO, etcd), logfmt (level=info: ArgoCD,
   # Longhorn, external-dns, CrowdSec), klog (I1002 ...: the Kubernetes
-  # components), brackets ([INFO]: Vault), a word after the timestamp (INF,
-  # WARN, info: Traefik, OpenObserve, the collector). Then one spelling each,
+  # components), Monolog ([date] channel.ERROR: Mautic), brackets ([INFO]:
+  # Vault), a word after the timestamp (INF, WARN, info: Traefik, OpenObserve,
+  # the collector). Then one spelling each,
   # and the matching severity number.
   processors:
     transform/severity:
@@ -74,13 +75,14 @@ agent:
             - merge_maps(cache, ExtractPatterns(body, "\"(?:level|lvl|severity)\"\\s*:\\s*\"(?P<lvl>[A-Za-z]+)\""), "upsert") where IsString(body) and IsMatch(body, "\"(level|lvl|severity)\"\\s*:\\s*\"[A-Za-z]")
             - merge_maps(cache, ExtractPatterns(body, "\\blevel=\"?(?P<lvl>[A-Za-z]+)"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "\\blevel=\"?[A-Za-z]")
             - merge_maps(cache, ExtractPatterns(body, "^(?P<lvl>[IWEF])\\d{4} \\d{2}:"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "^[IWEF]\\d{4} \\d{2}:")
+            - merge_maps(cache, ExtractPatterns(body, "^\\[[^\\]]+\\] [\\w.-]+\\.(?P<lvl>DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERGENCY):"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "^\\[[^\\]]+\\] [\\w.-]+\\.(DEBUG|INFO|NOTICE|WARNING|ERROR|CRITICAL|ALERT|EMERGENCY):")
             - merge_maps(cache, ExtractPatterns(body, "\\[(?P<lvl>TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\]"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "\\[(TRACE|DEBUG|INFO|WARN|WARNING|ERROR|FATAL)\\]")
             - merge_maps(cache, ExtractPatterns(body, "^\\S+\\s+(?P<lvl>(?i:trace|debug|info|warn|warning|error|fatal|inf|wrn|err|dbg|ftl))\\b"), "upsert") where cache["lvl"] == nil and IsString(body) and IsMatch(body, "^\\S+\\s+(?i:trace|debug|info|warn|warning|error|fatal|inf|wrn|err|dbg|ftl)\\b")
             - set(severity_text, ToUpperCase(cache["lvl"])) where cache["lvl"] != nil
-            - set(severity_text, "INFO") where severity_text == "I" or severity_text == "INF"
+            - set(severity_text, "INFO") where severity_text == "I" or severity_text == "INF" or severity_text == "NOTICE"
             - set(severity_text, "WARN") where severity_text == "W" or severity_text == "WRN" or severity_text == "WARNING"
             - set(severity_text, "ERROR") where severity_text == "E" or severity_text == "ERR"
-            - set(severity_text, "FATAL") where severity_text == "F" or severity_text == "FTL"
+            - set(severity_text, "FATAL") where severity_text == "F" or severity_text == "FTL" or severity_text == "CRITICAL" or severity_text == "ALERT" or severity_text == "EMERGENCY"
             - set(severity_text, "DEBUG") where severity_text == "DBG"
             - set(severity_number, SEVERITY_NUMBER_TRACE) where severity_text == "TRACE"
             - set(severity_number, SEVERITY_NUMBER_DEBUG) where severity_text == "DEBUG"
@@ -88,11 +90,20 @@ agent:
             - set(severity_number, SEVERITY_NUMBER_WARN) where severity_text == "WARN"
             - set(severity_number, SEVERITY_NUMBER_ERROR) where severity_text == "ERROR"
             - set(severity_number, SEVERITY_NUMBER_FATAL) where severity_text == "FATAL"
+    # Mautic's workers print the same banner on every start, every five
+    # minutes, blank lines included: nothing in it but noise. After
+    # k8sattributes, which sets the namespace (the file path gives only the
+    # pod's UID).
+    filter/noise:
+      error_mode: ignore
+      logs:
+        log_record:
+          - resource.attributes["k8s.namespace.name"] == "mautic" and IsString(body) and IsMatch(body, "^\\s*$|^ // |^ \\[OK\\] Consuming messages from transport")
   service:
     pipelines:
       logs:
         receivers: [filelog/std]
-        processors: [memory_limiter, transform/severity, resourcedetection, attributes, k8sattributes, batch]
+        processors: [memory_limiter, transform/severity, resourcedetection, attributes, k8sattributes, filter/noise, batch]
         exporters: [otlphttp/openobserve]
 
 # One replica: traces (OTLP), Kubernetes events, and every Prometheus target,

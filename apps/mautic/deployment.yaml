@@ -254,6 +254,54 @@ spec:
               mountPath: /etc/supervisor/conf.d/supervisord.conf
               subPath: supervisord.conf
               readOnly: true
+        # Mautic writes its application log (Monolog: errors, failed sends,
+        # the messenger's retries) to dated files under var/logs, which the
+        # collector never sees: it reads the containers' stdout. This follows
+        # every file there and writes each line to stdout. A file that exists
+        # when it starts is followed from its end, so a restart repeats
+        # nothing; one created later (each day's) from its first line. Same
+        # image as the others, already on the node; read-only, as www-data.
+        - name: logs
+          image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
+          command:
+            - sh
+            - -c
+            - |
+              cd /logs
+              seen=" "
+              for f in *.php; do
+                [ -e "$f" ] || continue
+                tail -n 0 -F "$f" &
+                seen="$seen$f "
+              done
+              while :; do
+                sleep 30
+                for f in *.php; do
+                  [ -e "$f" ] || continue
+                  case "$seen" in *" $f "*) continue ;; esac
+                  tail -n +1 -F "$f" &
+                  seen="$seen$f "
+                done
+              done
+          securityContext:
+            runAsUser: 33
+            runAsGroup: 33
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: data
+              mountPath: /logs
+              subPath: logs
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
