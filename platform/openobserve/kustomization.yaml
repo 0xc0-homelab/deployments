@@ -24,6 +24,7 @@ resources:
   - vault-secrets.yaml
   - httproute.yaml
   - dashboards.yaml
+  - reference-grant.yaml
 patches:
   # The chart's ServiceMonitor selects both Services, the headless one too, so
   # it would scrape the pod twice: only the main one carries this label.
