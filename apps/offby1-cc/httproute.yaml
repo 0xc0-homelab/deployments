@@ -7,7 +7,7 @@
 # This Middleware adds what is this application's: no framing, no browser
 # features, and isolation from other origins. The app sets its own
 # Content-Security-Policy, whose nonce changes per request
-# (0xc0-homelab/offby1.cc: src/proxy.ts).
+# (0xc0-labs/offby1.cc: src/proxy.ts).
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:

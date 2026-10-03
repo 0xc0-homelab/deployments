@@ -1,6 +1,6 @@
 # The landing page's Node server. The image is pinned by digest: each bump is
 # the tag@digest that the container-image job prints in its summary, on the
-# push to main of 0xc0-homelab/offby1.cc (README.md).
+# push to main of 0xc0-labs/offby1.cc (README.md).
 apiVersion: v1
 kind: Service
 metadata:
@@ -53,7 +53,7 @@ spec:
               app.kubernetes.io/name: offby1-cc
       containers:
         - name: web
-          image: ghcr.io/0xc0-homelab/offby1.cc:sha-c193732@sha256:4cb98ee194f88202a191f623bed0573b246ccf9665052efff26fc5e351d6bf68
+          image: ghcr.io/0xc0-labs/offby1.cc:sha-c193732@sha256:4cb98ee194f88202a191f623bed0573b246ccf9665052efff26fc5e351d6bf68
           env:
             # Next.js binds to $HOSTNAME, which the runtime sets to the pod's
             # name over the image's own value: bind every address instead.

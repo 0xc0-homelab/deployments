@@ -12,7 +12,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/0xc0-homelab/gitops.git
+        repoURL: https://github.com/0xc0-labs/gitops.git
         revision: main
         directories:
           - path: apps/*
@@ -31,7 +31,7 @@ spec:
     spec:
       project: apps
       source:
-        repoURL: https://github.com/0xc0-homelab/gitops.git
+        repoURL: https://github.com/0xc0-labs/gitops.git
         targetRevision: main
         path: "{{ .path.path }}"
       destination:
