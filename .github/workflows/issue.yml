@@ -1,4 +1,4 @@
-# Every PR must link an issue. The check itself lives in 0xc0-homelab/.github.
+# Every PR must link an issue. The check itself lives in 0xc0-labs/.github.
 name: issue
 
 on:
@@ -9,4 +9,4 @@ permissions: {}
 
 jobs:
   issue:
-    uses: 0xc0-homelab/.github/.github/workflows/pr-issue.yml@main
+    uses: 0xc0-labs/.github/.github/workflows/pr-issue.yml@main

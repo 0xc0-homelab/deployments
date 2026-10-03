@@ -1,13 +1,13 @@
 # offby1-cc
 
-The offby1.cc landing page: the Node server of 0xc0-homelab/offby1.cc, public
+The offby1.cc landing page: the Node server of 0xc0-labs/offby1.cc, public
 at `https://offby1.cc`; `www.offby1.cc` redirects there (`httproute.yaml`).
 No secrets and no volumes.
 
 ## Upgrades
 
-Every push to `main` in 0xc0-homelab/offby1.cc publishes
-`ghcr.io/0xc0-homelab/offby1.cc` as `sha-<7>` and `main`, and its
+Every push to `main` in 0xc0-labs/offby1.cc publishes
+`ghcr.io/0xc0-labs/offby1.cc` as `sha-<7>` and `main`, and its
 `container-image` job prints the image as `tag@digest` in its summary. An
 upgrade is that string in `deployment.yaml`, in a PR here; Argo CD rolls it
 out one pod at a time, never below two ready (`maxUnavailable: 0`).
