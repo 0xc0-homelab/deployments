@@ -43,6 +43,7 @@ generatorOptions:
 configMapGenerator:
   - name: openobserve-dashboards
     files:
+      - dashboards/apps.json
       - dashboards/argocd-monitoring.json
       - dashboards/crowdsec.json
       - dashboards/etcd.json
