@@ -1,6 +1,3 @@
-# Pod Security restricted: the image runs as node (uid 1000), with nothing to
-# chown and no capability. Its routes attach to the public offby1.cc
-# listeners (httproute.yaml).
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -8,6 +5,4 @@ metadata:
   labels:
     pod-security.kubernetes.io/enforce: restricted
     gateway.0xc0.cc/web: "true"
-    # Logs in to Vault through the apps role, which reads apps/offby1-cc/*
-    # (vault-secrets.yaml).
     vault.0xc0.cc/apps: "true"

@@ -1,13 +1,4 @@
-# The collectors that feed OpenObserve (openobserve), run by the OpenTelemetry
-# Operator (opentelemetry-operator):
-# - agent, one per node: every container's logs, and the node's and the pods'
-#   metrics (kubelet, host);
-# - gateway, one replica: traces over OTLP from whatever sends them (Traefik,
-#   ArgoCD), Kubernetes events, and every Prometheus target, from the cluster's
-#   ServiceMonitors through the target allocator, plus the control plane and
-#   kube-state-metrics (in kube-system).
-#
-# Backups: no volumes. A lost collector loses only what it had not sent yet.
+# Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: openobserve-collector
@@ -25,9 +16,7 @@ resources:
   - network-policy.yaml
   - vault-secrets.yaml
 patches:
-  # The chart takes the exporters' Authorization as a literal only: both
-  # collectors get O2_AUTH from Vault's Secret instead, and the header reads it
-  # (values.yaml).
+  # The chart takes the Authorization header as a literal only.
   - target:
       kind: OpenTelemetryCollector
     patch: |-
@@ -39,9 +28,8 @@ patches:
             secretKeyRef:
               name: openobserve-auth-vault
               key: O2_AUTH
-  # etcd's metrics, which the chart does not scrape: plain HTTP on each
-  # server's address, 2381 (etcd-expose-metrics, in infrastructure's rke2_server
-  # role).
+  # etcd's metrics, which the chart does not scrape (infrastructure's
+  # rke2_server role exposes them on 2381).
   - target:
       kind: OpenTelemetryCollector
       name: openobserve-collector-gateway
@@ -67,9 +55,7 @@ patches:
               target_label: __address__
             - source_labels: [__meta_kubernetes_pod_node_name]
               target_label: node
-  # Every scrape once a minute (values.yaml): the chart's jobs set 30 s each,
-  # and the target allocator's default, for a ServiceMonitor that names none,
-  # is 30 s too.
+  # Once a minute: the chart's jobs and the allocator's default are 30 s.
   - target:
       kind: OpenTelemetryCollector
       name: openobserve-collector-gateway

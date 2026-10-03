@@ -1,8 +1,7 @@
 fullnameOverride: openobserve-collector
 
-# Both send to OpenObserve inside the cluster, as its root user. The header
-# takes O2_AUTH from the pods' environment (kustomization.yaml patches it in
-# from vault-secrets.yaml): no credential in this file.
+# O2_AUTH, the service account's basic auth, comes from Vault
+# (vault-secrets.yaml; kustomization.yaml patches it in).
 exporters:
   otlphttp/openobserve:
     endpoint: http://openobserve.openobserve.svc.cluster.local:5080/api/default/
@@ -16,12 +15,10 @@ exporters:
 
 k8sCluster: homelab-prod
 
-# The image the operator's collector image would be, pinned with the chart.
 image:
   repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
   tag: "0.158.0"
 
-# kube-state-metrics, in kube-system as the gateway's job expects.
 kube-state-metrics:
   enabled: true
   resources:
@@ -31,14 +28,12 @@ kube-state-metrics:
     limits:
       memory: 128Mi
 
-# No applications yet: auto-instrumentation comes in phase 6.
+# No auto-instrumentation: each application sends its own telemetry.
 autoinstrumentation:
   enabled: false
 
-# One per node: every container's logs, and the node's and the pods' metrics.
 agent:
-  # Rocky's SELinux keeps a container from reading /var/log/pods: the chart's
-  # documented way through, which is why the namespace is privileged.
+  # SELinux keeps a container out of /var/log/pods: the chart's documented way.
   securityContext:
     privileged: true
     runAsUser: 0
@@ -50,22 +45,14 @@ agent:
       memory: 128Mi
     limits:
       memory: 512Mi
-  # Every minute, not every 30 s: half the metrics, nothing lost at this
-  # scale. The gateway's jobs and the ServiceMonitors follow
-  # (kustomization.yaml, each component's values).
+  # Every minute, not 30 s: half the metrics, nothing lost at this scale.
   receivers:
     kubeletstats:
       collection_interval: 60s
     hostmetrics:
       collection_interval: 60s
-  # Every log's level, from its body: each component writes it its own way,
-  # and the container runtime's format carries none. Tried in order, the first
-  # match wins: JSON ("level":"info", VSO, etcd), logfmt (level=info: ArgoCD,
-  # Longhorn, external-dns, CrowdSec), klog (I1002 ...: the Kubernetes
-  # components), Monolog ([date] channel.ERROR: Mautic), brackets ([INFO]:
-  # Vault), a word after the timestamp (INF, WARN, info: Traefik, OpenObserve,
-  # the collector). Then one spelling each,
-  # and the matching severity number.
+  # Each log's level, parsed from its body: the runtime's format carries none.
+  # First match wins: JSON, logfmt, klog, Monolog, [LEVEL], a bare word.
   processors:
     transform/severity:
       error_mode: ignore
@@ -90,10 +77,8 @@ agent:
             - set(severity_number, SEVERITY_NUMBER_WARN) where severity_text == "WARN"
             - set(severity_number, SEVERITY_NUMBER_ERROR) where severity_text == "ERROR"
             - set(severity_number, SEVERITY_NUMBER_FATAL) where severity_text == "FATAL"
-    # Mautic's workers print the same banner on every start, every five
-    # minutes, blank lines included: nothing in it but noise. After
-    # k8sattributes, which sets the namespace (the file path gives only the
-    # pod's UID).
+    # Mautic's worker banner, every five minutes. After k8sattributes, which
+    # sets the namespace.
     filter/noise:
       error_mode: ignore
       logs:
@@ -106,8 +91,6 @@ agent:
         processors: [memory_limiter, transform/severity, resourcedetection, attributes, k8sattributes, filter/noise, batch]
         exporters: [otlphttp/openobserve]
 
-# One replica: traces (OTLP), Kubernetes events, and every Prometheus target,
-# from the ServiceMonitors through the target allocator.
 gateway:
   targetAllocator:
     enabled: true
@@ -123,8 +106,7 @@ gateway:
       memory: 256Mi
     limits:
       memory: 1Gi
-  # Only the events: the other object watches copy every configmap, role and
-  # service account into a stream, for little use and much memory.
+  # Only the events: the other watches cost much memory for little use.
   receivers:
     k8sobjects/pods: null
     k8sobjects/nodes: null
@@ -153,10 +135,7 @@ gateway:
     k8sobjects/limitranges: null
     k8sobjects/resourcequotas: null
   processors:
-    # What no dashboard uses and costs the most to keep: Go's runtime metrics
-    # of every component, etcd's debugging ones, the controllers' and
-    # Longhorn's internal queues and clients, Vault's per-route and storage
-    # internals. Measured on 2026-10-02, the families that filled the volume.
+    # What no dashboard uses and costs the most to keep (measured 2026-10-02).
     filter/noise:
       error_mode: ignore
       metrics:
@@ -168,19 +147,14 @@ gateway:
           - IsMatch(name, "^(workqueue|rest_client)_")
           - IsMatch(name, "^longhorn_(rest_client|workqueue)_")
           - IsMatch(name, "^vault_(route|rollback|runtime|raft_storage_bolt)_")
-          # Per-target scrape statistics the receiver makes up, the
-          # scheduler's per-plugin histograms, and the process_* of every
-          # component but its memory and CPU.
           - IsMatch(name, "^scrape_")
           - IsMatch(name, "^scheduler_plugin_")
           - IsMatch(name, "^process_") and not IsMatch(name, "^process_(resident_memory_bytes|cpu_seconds_total)$")
-          # Keep-lists for the three that report most about themselves: what
-          # the dashboards use, and a little more worth having at hand.
+          # Keep-lists: what the dashboards use, and a little more.
           - IsMatch(name, "^vault_") and not IsMatch(name, "^vault_(core_(unsealed|active|handle_request|leadership_lost|check_token)|raft_(peers|committime|leader_lastcontact|apply|state_)|autopilot_|expire_num_leases|barrier_(get|put)|token_count|secret_kv_count)")
           - IsMatch(name, "^zo_") and not IsMatch(name, "^zo_(ingest_(records|bytes|memtable_bytes|wal_used_bytes)|http_(incoming_requests|response_time)|storage_(write|read)_bytes|query_(running|pending)_nums|node_(disk|memory|cpu)_usage)")
           - IsMatch(name, "^otelcol_") and not IsMatch(name, "^otelcol_(exporter_(sent|send_failed|queue_size|queue_capacity)|receiver_(accepted|refused|failed)|processor_(incoming|outgoing|dropped))")
-    # The API server's latency histogram, by verb only: by resource and scope
-    # it was millions of rows an hour, for a p99 by verb.
+    # By resource and scope it is millions of rows an hour.
     transform/aggregate:
       error_mode: ignore
       metric_statements:

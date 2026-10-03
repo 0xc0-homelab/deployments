@@ -1,7 +1,4 @@
-# Pod Security baseline, not restricted: the official image starts as root
-# (it chowns its volumes, then apache, cron and supervisord drop to
-# www-data). Its routes attach to the public 0xc0.cc listener and to the
-# internal one (httproute.yaml).
+# baseline, not restricted: the image starts as root to chown its volumes.
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -10,6 +7,4 @@ metadata:
     pod-security.kubernetes.io/enforce: baseline
     gateway.0xc0.cc/web: "true"
     gateway.0xc0.cc/internal: "true"
-    # Logs in to Vault through the apps role, which reads apps/mautic/*
-    # (vault-secrets.yaml).
     vault.0xc0.cc/apps: "true"

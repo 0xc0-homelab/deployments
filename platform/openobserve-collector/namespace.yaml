@@ -1,5 +1,4 @@
-# Privileged: the agent reads every pod's logs and the node's metrics from
-# hostPath, past SELinux (values.yaml).
+# The agent reads the node's logs and metrics from hostPath, past SELinux.
 apiVersion: v1
 kind: Namespace
 metadata:

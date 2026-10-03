@@ -1,8 +1,5 @@
-# One wildcard per domain, for the Gateway's HTTPS listeners (values.yaml),
-# from the letsencrypt ClusterIssuer (platform/cert-manager). Adding a domain
-# is a Certificate here, its two listeners, and its zone in the Cloudflare
-# token. sergioaten.cloud waits for that token: it does not reach the zone yet.
-# int.0xc0.cc is the WARP-only path's, on the internal listener.
+# Adding a domain: a Certificate here, its two listeners, and its zone in the
+# Cloudflare token. sergioaten.cloud has none: the token does not reach it.
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:

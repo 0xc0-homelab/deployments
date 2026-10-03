@@ -1,6 +1,4 @@
-# The operator takes no connections but its metrics, behind kube-rbac-proxy
-# (8443), which only OpenObserve's collector scrapes. kubelet's probes come from the pod's own node, always allowed. Egress stays open: the
-# Kubernetes API, and Vault.
+# Egress stays open: the Kubernetes API, and Vault.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -11,8 +9,6 @@ spec:
   policyTypes:
     - Ingress
 ---
-# The controller's metrics, scraped by OpenObserve's collector only. kube-rbac-proxy
-# checks the bearer token.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

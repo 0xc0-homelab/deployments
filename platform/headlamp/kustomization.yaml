@@ -1,7 +1,4 @@
-# Headlamp, the Kubernetes UI (kubernetes-sigs), on the WARP-only path:
-# https://headlamp.int.0xc0.cc, never public (operator decision, 2026-09-30).
-# It holds no power of its own: whoever logs in brings a token, and acts with
-# that token's rights (admin.yaml).
+# WARP only (operator decision, 2026-09-30).
 #
 # Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1

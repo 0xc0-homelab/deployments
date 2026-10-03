@@ -1,22 +1,13 @@
-# Values for the crowdsec chart (kustomization.yaml pins its version).
-# RKE2 runs containerd: the agents parse its log format, not Docker's.
 container_runtime: containerd
-# Pinned by digest, the multi-arch index. Bumping is its own commit.
 image:
   repository: crowdsecurity/crowdsec
   tag: "v1.8.1@sha256:0f2523fa61ef507f15d953045cface490cc880670c62f2755ced17524107f71a"
-# One agent per node, reading Traefik's access logs (JSON) for behaviour:
-# scans, brute force, known-bad bots.
 agent:
-  # Rocky's SELinux keeps a container's default domain (container_t) out of
-  # /var/log/containers and /var/log/pods (container_log_t): the agents read
-  # nothing. container_logreader_t, from container-selinux, is the domain for
-  # a container that reads container logs, and nothing more: narrower than
-  # the privileged spc_t OpenObserve's collector needs for the node's metrics.
+  # SELinux keeps container_t out of the container logs; this domain reads
+  # them and nothing more, narrower than spc_t.
   podSecurityContext:
     seLinuxOptions:
       type: container_logreader_t
-  # Metrics (6060) for OpenObserve's collector.
   metrics:
     serviceMonitor:
       enabled: true
@@ -27,30 +18,23 @@ agent:
   env:
     - name: COLLECTIONS
       value: crowdsecurity/traefik
-# The LAPI's shared secret and AppSec's registration token, from Vault
-# (platform/crowdsec/lapi) through Vault Secrets Operator (vault-secrets.yaml).
-# Left to the chart,
-# they are random on every render: ArgoCD would rewrite them and roll the
-# LAPI on each sync.
+# From Vault: left to the chart, they are random on every render and every
+# sync would roll the LAPI.
 secrets:
   externalSecret:
     name: crowdsec-lapi-vault
     csLapiSecretKey: lapi_secret
     registrationTokenKey: registration_token
 lapi:
-  # Metrics (6060) for OpenObserve's collector.
   metrics:
     serviceMonitor:
       enabled: true
-  # The bouncer's key comes from Vault (platform/shared/crowdsec-bouncer),
-  # through Vault Secrets Operator (vault-secrets.yaml), never from here.
   env:
     - name: BOUNCER_KEY_traefik
       valueFrom:
         secretKeyRef:
           name: crowdsec-bouncer-vault
           key: key
-  # Its database and its credentials, on Longhorn (the default StorageClass).
   persistentVolume:
     data:
       enabled: true
@@ -58,14 +42,10 @@ lapi:
     config:
       enabled: true
       size: 1Gi
-# The WAF: Traefik's bouncer sends it every request. Virtual patching (rules
-# for known CVEs, few false positives) and generic rules; no CRS to tune.
-# Traefik's bouncer blocks when AppSec cannot answer, so there are always
-# two, on different nodes, replaced one at a time (and pdb.yaml keeps one
-# through a drain).
+# The bouncer blocks when AppSec cannot answer: always two, on different nodes.
+# Virtual patching and generic rules, no CRS to tune.
 appsec:
   enabled: true
-  # Metrics (6060) for OpenObserve's collector.
   metrics:
     serviceMonitor:
       enabled: true

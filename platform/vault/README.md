@@ -41,8 +41,8 @@ k -n vault exec vault-0 -- vault operator raft list-peers
 
 ## Then
 
-- Revoke the root token once there is an admin policy and a way in that is
-  not root (OIDC, phase 3): `vault token revoke <root token>`.
+- The root token is kept with the unseal keys, outside the cluster (operator
+  decision, 2026-10-04): it is not revoked.
 - Upgrades are by hand: the StatefulSet updates `OnDelete`. Delete one pod at
   a time, standbys first, and unseal each before the next. Before each delete,
   `vault operator raft list-peers` must show all three voters healthy.

@@ -1,6 +1,4 @@
-# Mautic denies ingress but its HTTP port (80), from Traefik, on both paths.
-# Egress stays open: MariaDB, the sending provider once there is one, and
-# MaxMind's lookups.
+# Egress stays open: MariaDB, the sending provider and MaxMind's lookups.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

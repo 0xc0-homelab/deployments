@@ -1,11 +1,7 @@
-# OpenObserve: the cluster's metrics, logs and traces in one backend, with its
-# own dashboards and alerts (operator decision, 2026-10-01). Single node, local
-# disk, sqlite for its metadata; on the WARP-only path,
-# https://o2.int.0xc0.cc. The collectors (openobserve-collector) send to it.
+# Metrics, logs and traces in one backend (operator decision, 2026-10-01).
 #
-# Backups: data-openobserve-0 (Longhorn, 50 Gi), covered by PBS's nightly backup
-# of the RKE2 VMs. It is telemetry: losing it loses history, nothing the
-# cluster needs to run.
+# Backups: data-openobserve-0 (Longhorn, 50 Gi), in PBS's nightly backup of the
+# RKE2 VMs.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: openobserve
@@ -26,8 +22,7 @@ resources:
   - dashboards.yaml
   - reference-grant.yaml
 patches:
-  # The chart's ServiceMonitor selects both Services, the headless one too, so
-  # it would scrape the pod twice: only the main one carries this label.
+  # The ServiceMonitor would select the headless Service too: scrape once.
   - target:
       kind: ServiceMonitor
       name: openobserve
@@ -35,10 +30,7 @@ patches:
       - op: add
         path: /spec/selector/matchLabels/prometheus.io~1scrape
         value: "true"
-# The dashboards and their importer, mounted by the dashboards Job. No name
-# hash: a changed dashboard is a diff of this ConfigMap, so a sync, which runs
-# the Job (a PostSync hook) again; a hashed name would leave every old one
-# behind, since nothing here is pruned.
+# No hash: nothing here is pruned, so every old ConfigMap would stay behind.
 generatorOptions:
   disableNameSuffixHash: true
 configMapGenerator:

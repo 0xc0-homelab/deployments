@@ -1,10 +1,7 @@
-# CrowdSec, the WAF in front of Traefik (operator decision, 2026-09-29): its
-# Security Engine (the LAPI, and an agent per node reading Traefik's access
-# logs) and its AppSec component, which Traefik's bouncer plugin asks about
-# every request. Cloudflare Free leaves application attacks to it.
+# The WAF in front of Traefik (operator decision, 2026-09-29): Cloudflare Free
+# leaves application attacks to it.
 #
-# Backups: the LAPI's two volumes (its database, and its credentials) are on
-# Longhorn, so PBS backs them up with the RKE2 servers' data disks.
+# Backups: the LAPI's two Longhorn volumes, in PBS's backup of the RKE2 VMs.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: crowdsec
@@ -16,7 +13,6 @@ helmCharts:
     namespace: crowdsec
     kubeVersion: "1.36.4"
     includeCRDs: true
-    # The chart's Helm tests would run as plain Pods here.
     skipTests: true
     valuesFile: values.yaml
 resources:

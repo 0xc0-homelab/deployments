@@ -1,6 +1,5 @@
-# The operator denies ingress but its admission webhook, which the API server
-# calls from the node's address: no pod selector can name it. Its metrics
-# (8443) stay closed. Egress stays open: the Kubernetes API.
+# The webhook is open to any source: the API server calls from the node's
+# address, which no pod selector can name. Egress stays open.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

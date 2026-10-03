@@ -1,5 +1,4 @@
-# Headlamp denies ingress but from Traefik, on its port. Egress stays open:
-# the Kubernetes API.
+# Egress stays open: the Kubernetes API.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

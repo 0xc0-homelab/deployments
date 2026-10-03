@@ -1,5 +1,4 @@
-# The WARP-only path, to the active server only (vault-active): a standby
-# would only forward.
+# The active server only: a standby would only forward.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

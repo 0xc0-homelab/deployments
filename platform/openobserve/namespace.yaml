@@ -1,4 +1,3 @@
-# Its route attaches to the Gateway's internal listener only.
 apiVersion: v1
 kind: Namespace
 metadata:

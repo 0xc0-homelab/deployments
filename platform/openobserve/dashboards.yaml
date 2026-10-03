@@ -1,7 +1,4 @@
-# The dashboards, from git into OpenObserve's "homelab" folder
-# (dashboards/import.py), after every sync: a PostSync hook, recreated each
-# time. A changed dashboard changes the ConfigMap (kustomization.yaml), and so
-# brings a sync.
+# Imports the dashboards after every sync (README.md).
 apiVersion: batch/v1
 kind: Job
 metadata:

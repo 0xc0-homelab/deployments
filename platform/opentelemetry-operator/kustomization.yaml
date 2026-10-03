@@ -1,8 +1,4 @@
-# The OpenTelemetry Operator: it runs the collectors that feed OpenObserve
-# (openobserve-collector) from their OpenTelemetryCollector resources, with the
-# target allocator that turns the cluster's ServiceMonitors into scrape jobs.
-# Its admission webhook gets its certificate from the cert-manager already here.
-# Auto-instrumentation comes with the applications, in phase 6.
+# Runs the collectors in openobserve-collector.
 #
 # Backups: no volumes.
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -21,6 +17,6 @@ helmCharts:
 resources:
   - namespace.yaml
   - network-policy.yaml
-# No pruning: it brings CRDs, and the collectors hang off them.
+# No pruning: it brings CRDs.
 commonAnnotations:
   argocd.argoproj.io/sync-options: Prune=false

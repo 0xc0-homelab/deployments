@@ -1,13 +1,4 @@
-# https://offby1.cc is public, behind CrowdSec on websecure; external-dns
-# publishes both names (the public annotation). www.offby1.cc only redirects
-# to the apex.
-#
-# The baseline security headers (HSTS, nosniff, Referrer-Policy) are
-# Traefik's, on every entrypoint (platform/traefik/security-headers.yaml).
-# This Middleware adds what is this application's: no framing, no browser
-# features, and isolation from other origins. The app sets its own
-# Content-Security-Policy, whose nonce changes per request
-# (0xc0-labs/offby1.cc: src/proxy.ts).
+# This app's own headers; Traefik sets the baseline, the app its CSP.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -21,9 +12,7 @@ spec:
       Cross-Origin-Opener-Policy: same-origin
       Cross-Origin-Resource-Policy: same-origin
 ---
-# The RUM intake's limit, per visitor: the SDK batches, a few posts a minute
-# per open page. The visitor is CF-Connecting-IP, set by Cloudflare, the only
-# way in to this route (the public tunnel).
+# Per visitor: CF-Connecting-IP, since the public tunnel is the only way in.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -52,10 +41,8 @@ spec:
   hostnames:
     - offby1.cc
   rules:
-    # The browsers' RUM (the app's src/components/Rum), to OpenObserve's RUM
-    # intake: this one path, POST only, rate limited per visitor. OpenObserve
-    # itself stays on the WARP-only path; the ReferenceGrant in
-    # platform/openobserve admits this route to its Service.
+    # The browsers' RUM, to OpenObserve's intake: only this path is public
+    # (platform/openobserve/reference-grant.yaml).
     - matches:
         - path: {type: Exact, value: /rum/v1/default/rum}
           method: POST
@@ -97,8 +84,8 @@ spec:
     - filters:
         - type: RequestRedirect
           requestRedirect:
-            # With the scheme set, the redirect takes its well-known port,
-            # not the listener's 8443.
+            # With the scheme set, the redirect uses 443, not the listener's
+            # 8443.
             scheme: https
             hostname: offby1.cc
             statusCode: 301

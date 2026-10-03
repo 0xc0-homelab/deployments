@@ -1,11 +1,4 @@
-# The collectors deny ingress but:
-# - OTLP (4317 gRPC, 4318 HTTP) on the gateway, from what sends traces today:
-#   Traefik, ArgoCD and offby1.cc;
-# - the target allocator (8080), from the gateway, which asks it for its
-#   targets;
-# - the collectors' own metrics (8888), from the gateway, which scrapes them
-#   (prometheus-autodiscovery: the operator annotates the pods).
-# Egress stays open: they scrape every namespace and send to OpenObserve.
+# Egress stays open: they scrape every namespace.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

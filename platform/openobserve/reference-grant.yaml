@@ -1,6 +1,4 @@
-# The one route from outside this namespace to OpenObserve: offby1.cc's RUM
-# intake (apps/offby1-cc/httproute.yaml), /rum/v1/default/rum only. Without
-# this grant the Gateway refuses a cross-namespace backend.
+# offby1.cc's RUM intake (apps/offby1-cc/httproute.yaml).
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: ReferenceGrant
 metadata:

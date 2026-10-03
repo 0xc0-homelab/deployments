@@ -1,14 +1,6 @@
-# Every Longhorn pod denies ingress unless a policy allows it. Longhorn's own
-# policies (networkPolicies in longhorn.yaml) allow what the manager, the
-# instance managers, the webhooks and the backing-image pods need; policies
-# add up, so they keep working. This closes the rest: the UI, the CSI plugin
-# and its sidecars, the global manager, the driver deployer, the engine image
-# and share-manager. The manager's metrics (9500) are open to OpenObserve's
-# collector here too: the chart's manager policy does not list it. Kubelet's probes come from the pod's own node, which a
-# NetworkPolicy always allows.
-#
-# RWX volumes (share-manager's NFS, 2049) need an explicit allow the day one is
-# used: the nodes reach it from pod-network addresses that change per node.
+# The chart's own policies (values.yaml) open what its components need; this
+# closes the pods they do not cover. An RWX volume (NFS, 2049) would need an
+# explicit allow: there is none.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -19,7 +11,6 @@ spec:
   policyTypes:
     - Ingress
 ---
-# The UI, from Traefik only: its route is on the WARP-only path (ui.yaml).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -43,8 +34,7 @@ spec:
         - protocol: TCP
           port: 8000
 ---
-# The manager's metrics, scraped by OpenObserve's collector only. Adds to the
-# chart's longhorn-manager policy, which stays as it is.
+# The chart's longhorn-manager policy does not open its metrics.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

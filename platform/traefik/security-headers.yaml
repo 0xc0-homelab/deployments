@@ -1,11 +1,6 @@
-# The security headers every response carries, on the websecure and internal
-# entrypoints (values.yaml), whatever the route (operator decision,
-# 2026-10-02; #95). Only what no application can break: HSTS (every name is
-# HTTPS-only here, web just redirects; subdomains included, no preload, which
-# is hard to undo), nosniff and the referrer policy. Framing,
-# Permissions-Policy, cross-origin policies and the CSP depend on the
-# application, so they go on its own route (apps/offby1-cc/httproute.yaml):
-# Mautic's forms are framed, and its tracker loads from other sites.
+# Only what no application can break (operator decision, 2026-10-02). No HSTS
+# preload: it is hard to undo. Framing, CORP/COOP and CSP go on each app's
+# route: Mautic's forms are framed, and its tracker loads from other sites.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:

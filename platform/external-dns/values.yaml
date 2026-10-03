@@ -1,11 +1,7 @@
-# Values for the external-dns chart (kustomization.yaml pins its version).
-# Pinned by digest, the multi-arch index. Bumping is its own commit.
 image:
   tag: "v0.22.0@sha256:5fdcaf7deb5c158f93a1fc6fe169cdff4cfb9ae0172bee1a90ab0ef74fb9c9cf"
 provider:
   name: cloudflare
-# The token comes from Vault (platform/shared/cloudflare), through Vault
-# Secrets Operator (vault-secrets.yaml).
 env:
   - name: CF_API_TOKEN
     valueFrom:
@@ -14,28 +10,21 @@ env:
         key: api_token
 sources:
   - gateway-httproute
-# Only the public routes. The record's target is the Gateway's
-# external-dns.kubernetes.io/target annotation (platform/traefik): the
-# public tunnel.
+# The target is the Gateway's target annotation: the public tunnel.
 annotationFilter: gateway.0xc0.cc/public=true
-# Only the zones in the tunnel's own account: a CNAME to it from another
-# account's zone fails at the edge with 1014. Both are there; they match
-# infrastructure's public_domains.
+# Only zones in the tunnel's own account: a CNAME from another account's zone
+# fails with 1014. They match infrastructure's public_domains.
 domainFilters:
   - 0xc0.cc
   - offby1.cc
 # The WARP-only path's names never get a public record, whatever a route says.
 excludeDomains:
   - int.0xc0.cc
-# It deletes what it created and nothing else: the TXT records mark what is
-# its own.
 policy: sync
 registry: txt
 txtOwnerId: homelab-prod
-# The ownership TXT never shares a name with the CNAME it describes.
 txtPrefix: extdns-
 extraArgs:
   - --cloudflare-proxied
-# Metrics (7979) for OpenObserve's collector.
 serviceMonitor:
   enabled: true

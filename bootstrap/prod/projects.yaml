@@ -1,7 +1,4 @@
-# What each kind of workload may do, instead of Argo CD's default project,
-# which allows everything. The shared services are "platform": cluster-scoped
-# resources (CRDs, ClusterRoles, StorageClasses) and any namespace, from this
-# repo only. The applications of phase 6 get their own, narrower project.
+# Instead of Argo CD's default project, which allows everything.
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
@@ -9,8 +6,6 @@ metadata:
   namespace: argocd
 spec:
   description: The cluster's shared services, from platform/ in this repo.
-  # Only this repo is an Argo CD source; the charts and remote bases each
-  # component pulls are pinned in its kustomization.yaml.
   sourceRepos:
     - https://github.com/0xc0-labs/gitops.git
   destinations:
@@ -20,12 +15,8 @@ spec:
     - group: "*"
       kind: "*"
 ---
-# The applications (apps/ in this repo): namespaced resources, only in the
-# namespaces listed here, one per application, and no cluster-scoped kind but
-# their own Namespace. So an application cannot write into argocd, a shared
-# service's namespace or another application's. A CRD, a ClusterRole or a
-# StorageClass an application needs goes through platform/. Adding an
-# application is adding its namespace here too.
+# An application writes only to its own namespace, listed here; a
+# cluster-scoped kind it needs goes through platform/.
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:

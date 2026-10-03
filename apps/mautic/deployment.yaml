@@ -1,9 +1,5 @@
-# The three roles of the official image, as containers of one pod: web
-# (apache, which also runs the migrations at its start), cron (segments and
-# campaigns, every 15 minutes) and worker (the messenger queues, its
-# consumers restarted every five minutes: supervisord.conf). One pod, so
-# one Longhorn RWO volume serves the three: no RWX, no NFS share-manager.
-# cron and worker wait until Mautic is installed (README.md).
+# The image's three roles (web, cron, worker) as containers of one pod, so
+# one RWO volume serves them all: no RWX, no NFS share-manager.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,14 +10,11 @@ data:
   MAUTIC_DB_PORT: "3306"
   MAUTIC_DB_DATABASE: mautic
   MAUTIC_DB_USER: mautic
-  # The queues, in its own database: no broker to run.
   MAUTIC_MESSENGER_DSN_EMAIL: doctrine://default
   MAUTIC_MESSENGER_DSN_HIT: doctrine://default
-  # Traefik, from the pods' range: its X-Forwarded-* tell Mautic the request
-  # was HTTPS, and the client's address.
+  # Traefik, from the pods' range: trust its X-Forwarded-*.
   MAUTIC_TRUSTED_PROXIES: '["10.42.0.0/16"]'
   PHP_INI_VALUE_DATE_TIMEZONE: Europe/Madrid
-  # One consumer per queue instead of two: the traffic is small.
   DOCKER_MAUTIC_WORKERS_CONSUME_EMAIL: "1"
   DOCKER_MAUTIC_WORKERS_CONSUME_HIT: "1"
   DOCKER_MAUTIC_WORKERS_CONSUME_FAILED: "1"
@@ -59,7 +52,7 @@ metadata:
   namespace: mautic
 spec:
   replicas: 1
-  # One RWO volume: the old pod lets go of it before the new one starts.
+  # RWO: the old pod releases the volume before the new one starts.
   strategy:
     type: Recreate
   selector:
@@ -74,12 +67,9 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
-      # The official 7.2 image lacks GrapesJS's compiled assets
-      # (mautic/docker-mautic#479), so the email builder never loads. The
-      # release ZIP of the same version has them: this downloads it, checks
-      # it against its pinned sha256, and keeps only the assets, for web.
-      # Remove it with the first image that ships them (gitops#87); until
-      # then, a bump of the image bumps the version and sha256 here too.
+      # The 7.2 image lacks GrapesJS's compiled assets
+      # (mautic/docker-mautic#479): take them from the release ZIP. An image
+      # bump bumps version and sha256 here too; remove this once it ships them.
       initContainers:
         - name: grapesjs-assets
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
@@ -127,10 +117,7 @@ spec:
                 secretKeyRef:
                   name: mautic-database-vault
                   key: password
-            # The sending provider, from Vault (vault-secrets.yaml). A real
-            # environment variable wins over local.php, so the DSN set in
-            # Configuration is not used. Optional: without it, Mautic sends
-            # nothing.
+            # Wins over local.php's DSN. Optional: without it, nothing is sent.
             - &mailer
               name: MAUTIC_MAILER_DSN
               valueFrom:
@@ -144,8 +131,7 @@ spec:
           ports:
             - name: http
               containerPort: 80
-          # The migrations run before apache listens: minutes, after an
-          # upgrade.
+          # Migrations run before apache listens: minutes after an upgrade.
           startupProbe:
             tcpSocket:
               port: http
@@ -182,10 +168,8 @@ spec:
             - name: data
               mountPath: /var/www/html/docroot/media/images
               subPath: media/images
-            # Symfony's cache, its own per container (volumes, below).
             - name: cache-web
               mountPath: /var/www/html/var/cache
-            # GrapesJS's compiled assets (initContainers, above).
             - name: grapesjs-assets
               mountPath: /var/www/html/docroot/plugins/GrapesJsBuilderBundle/Assets/library/js/dist
               readOnly: true
@@ -249,18 +233,13 @@ spec:
               subPath: media/images
             - name: cache-worker
               mountPath: /var/www/html/var/cache
-            # Its consumers restart every five minutes (supervisord.conf).
             - name: supervisord
               mountPath: /etc/supervisor/conf.d/supervisord.conf
               subPath: supervisord.conf
               readOnly: true
-        # Mautic writes its application log (Monolog: errors, failed sends,
-        # the messenger's retries) to dated files under var/logs, which the
-        # collector never sees: it reads the containers' stdout. This follows
-        # every file there and writes each line to stdout. A file that exists
-        # when it starts is followed from its end, so a restart repeats
-        # nothing; one created later (each day's) from its first line. Same
-        # image as the others, already on the node; read-only, as www-data.
+        # Mautic's own log goes to dated files under var/logs, which the
+        # collector never sees: copy them to stdout. Files found at start are
+        # followed from their end, so a restart repeats nothing.
         - name: logs
           image: docker.io/mautic/mautic:7.2.1-apache@sha256:ff584fd13c8db06b4a7dd640e837dbbde69bd8c40da62140ff6c3c2dd0402abc
           command:
@@ -309,10 +288,9 @@ spec:
         - name: supervisord
           configMap:
             name: mautic-supervisord
-        # Symfony's cache, outside the image: the image ships one built
-        # before any plugin was enabled, in a layer cache:clear cannot
-        # rename on overlayfs (gitops#85). Built anew at every start, one
-        # per container, so no two warm it at once.
+        # Symfony's cache, outside the image: the image's own is stale and
+        # cache:clear cannot rename it on overlayfs. One per container, so no
+        # two warm it at once.
         - name: cache-web
           emptyDir:
             sizeLimit: 512Mi
@@ -322,8 +300,6 @@ spec:
         - name: cache-worker
           emptyDir:
             sizeLimit: 512Mi
-        # The release ZIP, only while the initContainer runs, and the assets
-        # it keeps.
         - name: download
           emptyDir:
             sizeLimit: 256Mi
