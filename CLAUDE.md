@@ -109,7 +109,7 @@ straight to prod.
 ## Before opening a PR
 
 For changes touching exposure or NetworkPolicies, run
-`homelab:network-reviewer`.
+`0xc0:network-reviewer`.
 
 Render every component you touch exactly as Argo CD does, and validate what
 comes out, with the tools in `mise.toml` (CI runs the same on every PR):
