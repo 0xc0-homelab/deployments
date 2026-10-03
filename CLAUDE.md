@@ -101,8 +101,10 @@ The network is decided by `../infrastructure/environments/prod/terraform.tfvars`
 
 ## Promotion
 
-Applications promote test→prod with **the same digest**. The image is never
-rebuilt between environments.
+Each application decides whether it has a test environment. One that does
+promotes test→prod with **the same digest**: the image is never rebuilt
+between environments. One that does not deploys the digest from `main`
+straight to prod.
 
 ## Before opening a PR
 
