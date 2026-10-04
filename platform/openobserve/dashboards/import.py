@@ -23,8 +23,6 @@ import urllib.request
 BASE = os.environ.get("O2_URL", "http://openobserve.openobserve.svc.cluster.local:5080")
 ORG = "default"
 FOLDER = "0xc0"
-# Folders this script used to manage under another name: emptied and removed.
-RETIRED = ("homelab",)
 DIR = os.environ.get("DASHBOARDS_DIR", "/dashboards")
 
 AUTH = "Basic " + base64.b64encode(
@@ -89,25 +87,6 @@ def main():
         if title not in wanted:
             call("DELETE", f"/api/{ORG}/dashboards/{cur['dashboard_id']}", {"folder": fid})
             print(f"deleted {title}")
-    # Never fails the sync: a leftover folder is cosmetic.
-    for name in RETIRED:
-        try:
-            retire(name)
-        except (urllib.error.URLError, KeyError) as e:
-            print(f"could not retire folder {name}: {e}")
-
-
-def retire(name):
-    try:
-        old = call("GET", f"/api/v2/{ORG}/folders/dashboards/name/{name}")["folderId"]
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return
-        raise
-    for d in call("GET", f"/api/{ORG}/dashboards", {"folder": old, "pageSize": 1000})["dashboards"]:
-        call("DELETE", f"/api/{ORG}/dashboards/{d['dashboard_id']}", {"folder": old})
-    call("DELETE", f"/api/v2/{ORG}/folders/dashboards/{old}")
-    print(f"retired folder {name}")
 
 
 if __name__ == "__main__":
