@@ -17,6 +17,7 @@ annotationFilter: gateway.0xc0.cc/public=true
 domainFilters:
   - 0xc0.cc
   - offby1.cc
+  - artistlabco.com
 # The WARP-only path's names never get a public record, whatever a route says.
 excludeDomains:
   - int.0xc0.cc

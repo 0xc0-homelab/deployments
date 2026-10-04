@@ -87,6 +87,26 @@ gateway:
           group: ""
           kind: Secret
       namespacePolicy: *routes
+    websecure-artistlabco-com:
+      port: 8443
+      protocol: HTTPS
+      hostname: "*.artistlabco.com"
+      mode: Terminate
+      certificateRefs:
+        - name: wildcard-artistlabco-com
+          group: ""
+          kind: Secret
+      namespacePolicy: *routes
+    websecure-artistlabco-com-apex:
+      port: 8443
+      protocol: HTTPS
+      hostname: artistlabco.com
+      mode: Terminate
+      certificateRefs:
+        - name: wildcard-artistlabco-com
+          group: ""
+          kind: Secret
+      namespacePolicy: *routes
 service:
   spec:
     type: NodePort
