@@ -13,7 +13,7 @@ exporters:
       Authorization: "Basic ${env:O2_AUTH}"
       stream-name: k8s_events
 
-k8sCluster: homelab-prod
+k8sCluster: 0xc0-prod
 
 image:
   repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
