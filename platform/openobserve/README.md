@@ -43,11 +43,11 @@ touch ingestion.
 
 ## Dashboards: from git
 
-Every dashboard is a JSON file in `dashboards/`, imported into the `homelab`
+Every dashboard is a JSON file in `dashboards/`, imported into the `0xc0`
 folder by a PostSync Job after every sync (`dashboards.yaml`,
 `dashboards/import.py`): updated by title, created when new, and deleted from
 the folder when its file is gone. Git wins: an edit made in the UI to a
-dashboard in `homelab` is overwritten on the next sync. Dashboards in other
+dashboard in `0xc0` is overwritten on the next sync. Dashboards in other
 folders are left alone, so the UI stays free for trying things.
 
 - **From the community repository**
@@ -71,7 +71,7 @@ folders are left alone, so the UI stays free for trying things.
   scrapes; every query was checked against OpenObserve before it was
   committed.
 
-**Changing or adding one:** edit it in the UI in any folder but `homelab`,
+**Changing or adding one:** edit it in the UI in any folder but `0xc0`,
 export it (dashboard → settings → export JSON), save it here as
 `dashboards/<name>.json`, one-space indented, add it to `configMapGenerator`
 in `kustomization.yaml`, and open a PR. The title is its key: renaming it is a
