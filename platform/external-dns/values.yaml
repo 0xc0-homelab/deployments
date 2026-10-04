@@ -26,8 +26,5 @@ txtOwnerId: 0xc0-prod
 txtPrefix: extdns-
 extraArgs:
   - --cloudflare-proxied
-  # One sync only: takes over the records the old owner ID wrote and rewrites
-  # their TXT to 0xc0-prod. Safe here, the one cluster writing these zones.
-  - --migrate-from-txt-owner=homelab-prod
 serviceMonitor:
   enabled: true
