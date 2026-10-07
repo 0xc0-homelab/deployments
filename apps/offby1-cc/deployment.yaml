@@ -48,7 +48,7 @@ spec:
               app.kubernetes.io/name: offby1-cc
       containers:
         - name: web
-          image: ghcr.io/0xc0-labs/offby1.cc:sha-c193732@sha256:4cb98ee194f88202a191f623bed0573b246ccf9665052efff26fc5e351d6bf68
+          image: ghcr.io/0xc0-labs/offby1.cc:sha-3fb87ce@sha256:db56bdd98330c97d0c29a01b9111db66b1869c4f52c26a295ea6113d8f287eb1
           env:
             # Next.js binds to $HOSTNAME, which Kubernetes sets to the pod's
             # name.
