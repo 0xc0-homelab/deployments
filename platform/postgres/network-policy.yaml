@@ -1,0 +1,41 @@
+# Accepts connections and initiates none (CLAUDE.md, Hard rules).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: postgres
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-server
+  namespace: postgres
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres-dumps
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres-databases
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: payload
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: payload
+      ports:
+        - protocol: TCP
+          port: 5432
+  egress: []

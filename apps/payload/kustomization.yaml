@@ -1,0 +1,19 @@
+# Payload CMS, one multi-tenant instance, the backend of several frontends
+# (operator decision, 2026-10-09; workspace#64). README.md.
+#
+# Backups:
+# - payload-media (Longhorn, 10Gi): the uploaded media, covered by PBS's
+#   nightly backup of the RKE2 VMs (03:00).
+# - Its database: platform/postgres's nightly dump, postgres-dumps/payload.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: payload
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - vault-secrets.yaml
+  - deployment.yaml
+  - httproute.yaml
+# No pruning: it holds data.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

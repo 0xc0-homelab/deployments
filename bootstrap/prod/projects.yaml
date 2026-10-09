@@ -31,6 +31,8 @@ spec:
       namespace: mautic
     - server: https://kubernetes.default.svc
       namespace: offby1-cc
+    - server: https://kubernetes.default.svc
+      namespace: payload
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
