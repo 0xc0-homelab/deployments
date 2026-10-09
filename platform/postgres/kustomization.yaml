@@ -1,0 +1,24 @@
+# One server the applications share, never one each (operator decision,
+# 2026-10-09; workspace#64): Payload does not support MariaDB. No operator: it
+# costs memory the cluster cannot spare.
+#
+# Backups:
+# - data-postgres-0 (Longhorn, 10Gi): the server's datadir, covered by PBS's
+#   nightly backup of the RKE2 VMs (03:00). Restoring it rolls every database
+#   back at once.
+# - postgres-dumps (Longhorn, 5Gi): a logical dump of each database, nightly at
+#   01:30 (dumps.yaml), seven days kept, so one application can be restored
+#   alone. Covered by the same PBS backup, which runs after it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: postgres
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - vault-secrets.yaml
+  - statefulset.yaml
+  - dumps.yaml
+  - databases.yaml
+# No pruning: it holds data.
+commonAnnotations:
+  argocd.argoproj.io/sync-options: Prune=false

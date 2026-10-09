@@ -1,0 +1,94 @@
+# Nightly at 01:30, before PBS's 03:00 backup takes the volume with it.
+#
+# Backup: PBS's nightly backup of the RKE2 VMs.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-dumps
+  namespace: postgres
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-dumps
+  namespace: postgres
+spec:
+  schedule: "30 1 * * *"
+  timeZone: Europe/Madrid
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: postgres-dumps
+        spec:
+          restartPolicy: OnFailure
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: dump
+              image: docker.io/library/postgres:18.6@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+              command:
+                - bash
+                - -euo
+                - pipefail
+                - -c
+                - |
+                  day=$(date +%F)
+                  dbs=$(psql -h postgres -U postgres -d postgres -At \
+                    -c "SELECT datname FROM pg_database WHERE NOT datistemplate AND datname <> 'postgres'")
+                  for db in $dbs; do
+                    mkdir -p "/dumps/$db"
+                    pg_dump -h postgres -U postgres --create --clean --if-exists "$db" \
+                      | gzip > "/dumps/$db/$day.sql.gz.part"
+                    mv "/dumps/$db/$day.sql.gz.part" "/dumps/$db/$day.sql.gz"
+                    echo "dumped $db"
+                  done
+                  # A dump that died mid-write leaves its .part behind.
+                  find /dumps \( -name '*.sql.gz' -o -name '*.sql.gz.part' \) -mtime +6 -delete
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-superuser-vault
+                      key: password
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  memory: 256Mi
+              volumeMounts:
+                - name: dumps
+                  mountPath: /dumps
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: dumps
+              persistentVolumeClaim:
+                claimName: postgres-dumps
+            - name: tmp
+              emptyDir: {}
