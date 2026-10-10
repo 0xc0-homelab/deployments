@@ -108,8 +108,19 @@ straight to prod.
 
 ## Before opening a PR
 
-For changes touching exposure or NetworkPolicies, run
-`0xc0:network-reviewer`.
+For changes touching exposure or NetworkPolicies, check against the hard
+rules above:
+
+- Only a route meant to be public carries `gateway.0xc0.cc/public: "true"`,
+  in a domain of external-dns's `domainFilters`. A portal, Vault, the
+  Kubernetes API or another admin interface never does.
+- A public route attaches to an HTTPS listener of `websecure`, never `web`.
+  An internal one attaches to `sectionName: internal` with a
+  `*.int.0xc0.cc` name, in a namespace labelled
+  `gateway.0xc0.cc/internal: "true"`, without the `public` annotation; that
+  name never goes on a `websecure` route.
+- The namespace denies by default and its NetworkPolicies open only what it
+  needs. A data service accepts connections and initiates none.
 
 Render every component you touch exactly as Argo CD does, and validate what
 comes out, with the tools in `mise.toml` (CI runs the same on every PR):
