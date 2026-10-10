@@ -6,3 +6,8 @@ helm        = "4.3.0"
 kubeconform = "0.8.0"
 yq          = "4.53.6"
 kustomize   = "5.8.1"
+
+[settings]
+# Installs only what mise.lock records, every download checked against its
+# checksum, for this machine's platform. After any change above, `mise lock`.
+locked = true
